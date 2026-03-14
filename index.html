@@ -283,6 +283,20 @@
     }
     .view-toggle-btn.active { background: var(--surface1); color: var(--text); }
 
+    /* ── Export buttons ── */
+    .set-export-row {
+      display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap;
+    }
+    .btn-export {
+      padding: 4px 10px; border-radius: 5px; cursor: pointer;
+      border: 1px solid var(--surface1);
+      background: var(--surface0); color: var(--subtext0);
+      font-size: 11px; font-weight: 500;
+      transition: background .1s, color .1s;
+    }
+    .btn-export:hover { background: var(--surface1); color: var(--text); }
+    .btn-export:active { opacity: .7; }
+
     /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -340,7 +354,7 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.7 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
+<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.8 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
@@ -364,6 +378,10 @@
           <div class="frog-name-display" id="builder-name">—</div>
           <div class="frog-combo-display" id="builder-combo"></div>
           <div class="dex-id-display" id="builder-dexid"></div>
+          <div class="btn-row" style="margin-top:8px;justify-content:center;flex-wrap:wrap">
+            <button class="btn-export" onclick="exportBuilderFrog(true)"  title="Download transparent PNG">⬇ PNG</button>
+            <button class="btn-export" onclick="exportBuilderFrog(false)" title="Download PNG with name card">⬇ with name</button>
+          </div>
         </div>
 
         <div class="builder-controls">
@@ -507,8 +525,10 @@
             </div>
             <div class="set-frogs" id="sb-frogs-row"></div>
           </div>
-          <div class="btn-row" style="margin-top:12px">
-            <button class="btn btn-sm" id="sb-clear-btn" style="display:none;background:var(--surface0);color:var(--red);border:1px solid var(--surface1)" onclick="sbClear()">🗑 Clear Set</button>
+          <div class="btn-row" style="margin-top:12px;flex-wrap:wrap">
+            <button class="btn btn-sm" id="sb-clear-btn"      style="display:none;background:var(--surface0);color:var(--red);border:1px solid var(--surface1)"     onclick="sbClear()">🗑 Clear Set</button>
+            <button class="btn-export"  id="sb-export-png-btn" style="display:none" onclick="exportSbSet(true)"  title="Download transparent PNG of frogs">⬇ PNG</button>
+            <button class="btn-export"  id="sb-export-card-btn" style="display:none" onclick="exportSbSet(false)" title="Download set card PNG">⬇ Set card</button>
           </div>
         </div>
 
@@ -1415,6 +1435,26 @@ function buildSetCard(set, obs) {
   });
 
   card.appendChild(frogsRow);
+
+  // Export buttons
+  const expRow = document.createElement('div');
+  expRow.className = 'set-export-row';
+  const expPng  = document.createElement('button');
+  expPng.className  = 'btn-export';
+  expPng.title      = 'Download transparent PNG of frogs';
+  expPng.textContent = '⬇ PNG';
+  const expCard = document.createElement('button');
+  expCard.className  = 'btn-export';
+  expCard.title      = 'Download set card PNG';
+  expCard.textContent = '⬇ Set card';
+  const setFrogData = set.frogs.map(([count, colorId, patternId, genusId]) =>
+    ({ colorId, patternId, genusId, count }));
+  expPng.onclick  = () => exportSetImage(setFrogData, set.name, set.code, true);
+  expCard.onclick = () => exportSetImage(setFrogData, set.name, set.code, false);
+  expRow.appendChild(expPng);
+  expRow.appendChild(expCard);
+  card.appendChild(expRow);
+
   return card;
 }
 
@@ -1470,6 +1510,27 @@ function buildGameStrip(set, obs) {
     labelDiv.appendChild(weekEl);
   }
   strip.appendChild(labelDiv);
+
+  // Export buttons
+  const expRow2 = document.createElement('div');
+  expRow2.className = 'set-export-row';
+  expRow2.style.justifyContent = 'center';
+  const expPng2  = document.createElement('button');
+  expPng2.className   = 'btn-export';
+  expPng2.title       = 'Download transparent PNG of frogs';
+  expPng2.textContent = '⬇ PNG';
+  const expCard2 = document.createElement('button');
+  expCard2.className   = 'btn-export';
+  expCard2.title       = 'Download set card PNG';
+  expCard2.textContent = '⬇ Set card';
+  const setFrogData2 = set.frogs.map(([count, colorId, patternId, genusId]) =>
+    ({ colorId, patternId, genusId, count }));
+  expPng2.onclick  = () => exportSetImage(setFrogData2, set.name || set.setName, set.code || null, true);
+  expCard2.onclick = () => exportSetImage(setFrogData2, set.name || set.setName, set.code || null, false);
+  expRow2.appendChild(expPng2);
+  expRow2.appendChild(expCard2);
+  strip.appendChild(expRow2);
+
   return strip;
 }
 
@@ -1597,15 +1658,21 @@ function renderSbPreview() {
   document.getElementById('sb-slot-badge').textContent = sbFrogs.length + ' / 8 frogs';
   if (addBtn) { addBtn.disabled = sbFrogs.length >= 8; addBtn.style.opacity = sbFrogs.length >= 8 ? '0.4' : ''; }
 
+  const exportPngBtn  = document.getElementById('sb-export-png-btn');
+  const exportCardBtn = document.getElementById('sb-export-card-btn');
   if (!sbFrogs.length) {
     card.style.display = 'none';
     emptyMsg.style.display = '';
     clearBtn.style.display = 'none';
+    if (exportPngBtn)  exportPngBtn.style.display  = 'none';
+    if (exportCardBtn) exportCardBtn.style.display = 'none';
     return;
   }
   card.style.display = '';
   emptyMsg.style.display = 'none';
   clearBtn.style.display = '';
+  if (exportPngBtn)  exportPngBtn.style.display  = '';
+  if (exportCardBtn) exportCardBtn.style.display = '';
 
   const frogsRow = document.getElementById('sb-frogs-row');
   frogsRow.innerHTML = '';
@@ -1672,6 +1739,175 @@ function renderSbPreview() {
       frogsRow.appendChild(tile);
     });
   }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PNG Export
+// ══════════════════════════════════════════════════════════════════════════════
+
+function _roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function _safeFilename(name) {
+  return (name || 'frog').replace(/[^\w\- ]/g, '').replace(/\s+/g, '_').slice(0, 60) || 'frog';
+}
+
+function _downloadDataUrl(dataUrl, filename) {
+  const a = document.createElement('a');
+  a.href = dataUrl; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// Renders a frog to a new offscreen canvas at given pixel size, returns Promise<canvas>
+function _renderFrogOffscreen(colorId, patternId, genusId, size) {
+  const isChroma = patternId === 15;
+  const isGlass  = colorId  === 22;
+  const [, cr, cg, cb] = COLORS[colorId]          || [null, 128, 128, 128];
+  const [, pr, pg, pb] = PATTERN_COLORS[patternId] || [null, 128, 128, 128];
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  return Promise.all([
+    loadSprite('frog_base_256.png'),
+    loadSprite('frog_' + genusId + '_256.png'),
+    loadSprite('overlay_256.png'),
+  ]).then(([baseImg, genusImg, ovImg]) => {
+    ctx.clearRect(0, 0, size, size);
+    if (isChroma) {
+      const [pr2, pg2, pb2] = hsvToRgb(chromaHue, 1, 1);
+      _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, size, size, cr, cg, cb);
+      _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, size, size, pr2, pg2, pb2);
+    } else {
+      _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, size, size, cr, cg, cb);
+      _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, size, size, pr, pg, pb);
+    }
+    _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, size, size);
+    if (isGlass) _applyGlassEffect(ctx, size, size);
+    return canvas;
+  });
+}
+
+// Export frog from builder tab
+async function exportBuilderFrog(transparent) {
+  const colorId   = parseInt(document.getElementById('b-color').value);
+  const patternId = parseInt(document.getElementById('b-pattern').value);
+  const genusId   = parseInt(document.getElementById('b-genus').value);
+  const name      = frogFullName(colorId, patternId, genusId);
+  const SIZE      = 256;
+
+  const frogCv = await _renderFrogOffscreen(colorId, patternId, genusId, SIZE);
+
+  if (transparent) {
+    _downloadDataUrl(frogCv.toDataURL('image/png'), _safeFilename(name) + '.png');
+    return;
+  }
+
+  // Card: dark gradient background + frog name text
+  const PAD    = 24;
+  const TEXT_H = 44;
+  const out    = document.createElement('canvas');
+  out.width  = SIZE + PAD * 2;
+  out.height = SIZE + PAD * 2 + TEXT_H;
+  const ctx  = out.getContext('2d');
+
+  const grad = ctx.createLinearGradient(0, 0, 0, out.height);
+  grad.addColorStop(0, '#38384e');
+  grad.addColorStop(1, '#1e1e2e');
+  ctx.fillStyle = grad;
+  _roundRectPath(ctx, 0, 0, out.width, out.height, 20);
+  ctx.fill();
+
+  ctx.drawImage(frogCv, PAD, PAD, SIZE, SIZE);
+
+  ctx.fillStyle   = 'rgba(205,214,244,0.90)';
+  ctx.font        = 'bold 15px "Segoe UI", system-ui, sans-serif';
+  ctx.textAlign   = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(name, out.width / 2, SIZE + PAD + 12);
+
+  _downloadDataUrl(out.toDataURL('image/png'), _safeFilename(name) + '_card.png');
+}
+
+// Export set from set builder tab
+async function exportSbSet(transparent) {
+  if (!sbFrogs.length) return;
+  const setName = document.getElementById('sb-set-name').value.trim() || 'My Custom Set';
+  const frogData = sbFrogs.map(f => ({ colorId: f.colorId, patternId: f.patternId, genusId: f.genusId, count: f.count }));
+  await exportSetImage(frogData, setName, null, transparent);
+}
+
+// Shared set export (used by weekly sets and set builder)
+// frogData: [{colorId, patternId, genusId, count}, ...]
+// weekCode: string|null
+async function exportSetImage(frogData, setName, weekCode, transparent) {
+  const FROG_SIZE = 88;
+  const GAP       = 4;
+
+  // Render each individual frog (count times per entry)
+  const frogCanvases = [];
+  for (const f of frogData) {
+    for (let n = 0; n < f.count; n++) {
+      frogCanvases.push(await _renderFrogOffscreen(f.colorId, f.patternId, f.genusId, FROG_SIZE));
+    }
+  }
+  if (!frogCanvases.length) return;
+
+  const totalW   = frogCanvases.length * (FROG_SIZE + GAP) - GAP;
+  const safeName = _safeFilename(setName || 'set');
+
+  if (transparent) {
+    const out = document.createElement('canvas');
+    out.width  = totalW;
+    out.height = FROG_SIZE;
+    const ctx  = out.getContext('2d');
+    frogCanvases.forEach((fc, i) => ctx.drawImage(fc, i * (FROG_SIZE + GAP), 0));
+    _downloadDataUrl(out.toDataURL('image/png'), safeName + '_frogs.png');
+    return;
+  }
+
+  // Background: game-style dark pill + set name / week
+  const H_PAD   = 18;
+  const V_PAD   = 14;
+  const LABEL_H = weekCode ? 48 : 34;
+  const out     = document.createElement('canvas');
+  out.width  = totalW + H_PAD * 2;
+  out.height = FROG_SIZE + V_PAD * 2 + LABEL_H;
+  const ctx  = out.getContext('2d');
+
+  const grad = ctx.createLinearGradient(0, 0, out.width, out.height);
+  grad.addColorStop(0, '#38384e');
+  grad.addColorStop(1, '#1e1e2e');
+  ctx.fillStyle = grad;
+  _roundRectPath(ctx, 0, 0, out.width, out.height, 20);
+  ctx.fill();
+
+  frogCanvases.forEach((fc, i) =>
+    ctx.drawImage(fc, H_PAD + i * (FROG_SIZE + GAP), V_PAD, FROG_SIZE, FROG_SIZE));
+
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'top';
+  if (setName) {
+    ctx.fillStyle = 'rgba(205,214,244,0.55)';
+    ctx.font      = 'bold 14px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText(setName, out.width / 2, FROG_SIZE + V_PAD + 8);
+  }
+  if (weekCode) {
+    ctx.fillStyle = 'rgba(166,173,200,0.35)';
+    ctx.font      = '11px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText(parseWeekCode(weekCode), out.width / 2, FROG_SIZE + V_PAD + 28);
+  }
+  _downloadDataUrl(out.toDataURL('image/png'), safeName + '_set.png');
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
