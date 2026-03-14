@@ -146,10 +146,9 @@
     .dex-id-display strong { color: var(--text); }
 
     /* ── Species grid ── */
-    .species-toolbar {
-      display: flex; gap: 8px; align-items: center;
-      margin-bottom: 14px; flex-wrap: wrap;
-    }
+    .species-toolbar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+    .breeds-search-row { display: flex; gap: 8px; align-items: center; }
+    .breeds-filter-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .search-input {
       background: var(--surface0); border: 1px solid var(--surface1);
       border-radius: 6px; color: var(--text); padding: 7px 12px;
@@ -248,8 +247,11 @@
       #builder-canvas { width: 160px !important; height: 160px !important; }
 
       .species-toolbar { gap: 6px; }
-      .search-input { min-width: unset; width: 100%; }
-      .filter-select { flex: 1; min-width: 0; font-size: 11px; padding: 6px 6px; }
+      .breeds-search-row { width: 100%; }
+      .search-input { min-width: unset; width: 100%; flex: 1; }
+      .breeds-filter-row { width: 100%; gap: 6px; }
+      .breeds-filter-row .filter-select { flex: 1; min-width: 0; font-size: 12px; padding: 7px 6px; }
+      .breeds-filter-row .btn { flex-shrink: 0; }
       .species-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; }
       .species-card { padding: 8px 6px; }
       .species-canvas { width: 60px !important; height: 60px !important; }
@@ -271,7 +273,7 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.0</div>
+<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.1</div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
@@ -339,20 +341,24 @@
   <!-- ── Breeds ── -->
   <div class="tab-panel" id="tab-species">
     <div class="species-toolbar">
-      <input class="search-input" type="search" id="species-search"
-             placeholder="Search color, pattern, genus…"
-             oninput="filterSpecies(this.value)">
-      <select class="filter-select" id="species-color-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
-        <option value="">All Colors</option>
-      </select>
-      <select class="filter-select" id="species-pattern-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
-        <option value="">All Patterns</option>
-      </select>
-      <select class="filter-select" id="species-genus-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
-        <option value="">All Genera</option>
-      </select>
-      <button class="btn btn-sm" style="background:var(--surface0);color:var(--subtext0);border:1px solid var(--surface1)" onclick="resetBreedFilters()">Reset</button>
-      <span class="count-lbl" id="species-count"></span>
+      <div class="breeds-search-row">
+        <input class="search-input" type="search" id="species-search"
+               placeholder="Search color, pattern, genus…"
+               oninput="filterSpecies(this.value)">
+        <span class="count-lbl" id="species-count"></span>
+      </div>
+      <div class="breeds-filter-row">
+        <select class="filter-select" id="species-color-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
+          <option value="">All Colors</option>
+        </select>
+        <select class="filter-select" id="species-pattern-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
+          <option value="">All Patterns</option>
+        </select>
+        <select class="filter-select" id="species-genus-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
+          <option value="">All Genera</option>
+        </select>
+        <button class="btn btn-sm" style="background:var(--surface0);color:var(--subtext0);border:1px solid var(--surface1)" onclick="resetBreedFilters()">Reset</button>
+      </div>
     </div>
     <div class="species-grid" id="species-grid"></div>
     <div class="breeds-pagination" id="breeds-pagination" style="display:none">
