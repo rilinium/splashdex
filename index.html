@@ -966,10 +966,11 @@ async function loadSets() {
   statusEl.style.display = 'block';
 
   const SETS_URL = 'https://www.nimblebit.com/sets.txt';
-  // Try direct fetch first; fall back to CORS proxy if blocked
+  // 1. Same-origin cached copy (committed by GitHub Action daily) — no CORS issues
+  // 2. Direct fetch (works if nimblebit ever adds CORS headers)
   const urls = [
+    'sets.txt',
     SETS_URL,
-    'https://corsproxy.io/?' + encodeURIComponent(SETS_URL),
   ];
 
   let raw = null;
