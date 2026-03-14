@@ -1,6 +1,6 @@
 'use strict';
 
-const { createCanvas, loadImage } = require('@napi-rs/canvas');
+const { createCanvas, loadImage, GlobalFonts } = require('@napi-rs/canvas');
 const GIFEncoder = require('gif-encoder-2');
 const path = require('path');
 const fs   = require('fs');
@@ -11,6 +11,21 @@ const SPRITES_DIR  = path.join(__dirname, '..', 'frog_sprites');
 const BANNER_PATH  = path.join(__dirname, '..', 'embedbanner.png');
 const FROGBG_PATH  = path.join(__dirname, '..', 'embedfrogbg.png');
 const SETS_PATH    = path.join(__dirname, '..', 'sets.txt');
+const FONTS_DIR    = path.join(__dirname, '..', 'fonts');
+
+// Register bundled Inter fonts once per Lambda instance
+let _fontsRegistered = false;
+function ensureFonts() {
+  if (_fontsRegistered) return;
+  try {
+    GlobalFonts.register(fs.readFileSync(path.join(FONTS_DIR, 'Inter-Regular.ttf')), 'Inter');
+    GlobalFonts.register(fs.readFileSync(path.join(FONTS_DIR, 'Inter-Bold.ttf')),    'Inter');
+    console.log('[og] fonts registered:', GlobalFonts.families.map(f => f.family).join(', ') || '(none)');
+  } catch (e) {
+    console.error('[og] font registration failed:', e.message);
+  }
+  _fontsRegistered = true;
+}
 
 const CHROMA_ID  = 15;
 const GIF_FRAMES = 16;
@@ -164,12 +179,115 @@ function makeEncoder(w, h) {
 }
 
 
+// ── Stats card ────────────────────────────────────────────────────────────────
+async function renderStatsCard(setsCount) {
+  ensureFonts();
+
+  const W = 1200, H = 630;
+  const cv  = createCanvas(W, H);
+  const ctx = cv.getContext('2d');
+
+  // Background gradient #1e1e2e → #11111b
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#1e1e2e');
+  bg.addColorStop(1, '#11111b');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // Top accent bar
+  const bar = ctx.createLinearGradient(0, 0, W, 0);
+  bar.addColorStop(0,    '#b4befe');
+  bar.addColorStop(0.33, '#89b4fa');
+  bar.addColorStop(0.66, '#cba6f7');
+  bar.addColorStop(1,    '#94e2d5');
+  ctx.fillStyle = bar;
+  ctx.fillRect(0, 0, W, 5);
+
+  // Branding
+  ctx.fillStyle = '#cdd6f4';
+  ctx.font      = 'bold 38px Inter';
+  ctx.fillText('Splashdex', 64, 74);
+  ctx.fillStyle = '#6c7086';
+  ctx.font      = '24px Inter';
+  ctx.fillText('stats', 64, 106);
+
+  // Divider
+  ctx.fillStyle = '#313244';
+  ctx.fillRect(64, 122, W - 128, 1);
+
+  // Stat cards
+  const stats = [
+    { value: (44160).toLocaleString('en-US'), label: 'Combinations', color: '#89b4fa' },
+    { value: '23',                             label: 'Colors',        color: '#a6e3a1' },
+    { value: '16',                             label: 'Patterns',      color: '#cba6f7' },
+    { value: '120',                            label: 'Genera',        color: '#fab387' },
+    { value: String(setsCount),                label: 'Weekly Sets',   color: '#94e2d5' },
+  ];
+
+  const cardW = 196, cardH = 340;
+  const totalCardsW = stats.length * cardW + (stats.length - 1) * 16;
+  let cx = Math.round((W - totalCardsW) / 2);
+  const cy = 152;
+
+  for (const stat of stats) {
+    // Card background
+    ctx.fillStyle = 'rgba(49,50,68,0.6)';
+    roundRectPath(ctx, cx, cy, cardW, cardH, 16);
+    ctx.fill();
+
+    // Color accent top strip
+    ctx.fillStyle = stat.color;
+    roundRectPath(ctx, cx, cy, cardW, 6, 16);
+    ctx.fill();
+    ctx.fillRect(cx, cy + 6, cardW, 6); // flat bottom so strip is flush with card top
+
+    // Value
+    ctx.fillStyle = stat.color;
+    ctx.font      = 'bold 54px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText(stat.value, cx + cardW / 2, cy + 110);
+
+    // Label
+    ctx.fillStyle = '#a6adc8';
+    ctx.font      = '20px Inter';
+    ctx.fillText(stat.label, cx + cardW / 2, cy + 148);
+
+    ctx.textAlign = 'left';
+    cx += cardW + 16;
+  }
+
+  // Footer
+  ctx.fillStyle = '#45475a';
+  ctx.font      = '18px Inter';
+  ctx.fillText('splashdex.rilinium.com/stats', 64, H - 36);
+
+  return cv.toBuffer('image/png');
+}
+
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
-  const { frog, set, builder, name, transparent } = req.query || {};
+  const { frog, set, builder, name, transparent, stats } = req.query || {};
   const noBg = transparent !== undefined;
 
   res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+
+  try {
+    // ── Stats card ────────────────────────────────────────────────────────────
+    if (stats !== undefined) {
+      const setsCount = getSets().length;
+      const png = await renderStatsCard(setsCount);
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+      return res.end(png);
+    }
+
 
   try {
     // ── Single frog card ──────────────────────────────────────────────────────

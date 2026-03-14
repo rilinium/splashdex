@@ -45,11 +45,11 @@ module.exports = (req, res) => {
   <meta property="og:type"        content="website">
   <meta property="og:title"       content="${ogTitle}">
   <meta property="og:description" content="${ogDesc}">
-  <meta property="og:image"       content="${BASE}/embedbanner.png">
+  <meta property="og:image"       content="${BASE}/api/og?stats">
   <meta property="og:url"         content="${BASE}/stats">
   <meta name="twitter:card"       content="summary_large_image">
   <meta name="twitter:title"      content="${ogTitle}">
-  <meta name="twitter:image"      content="${BASE}/embedbanner.png">
+  <meta name="twitter:image"      content="${BASE}/api/og?stats">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
