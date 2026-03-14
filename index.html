@@ -354,7 +354,7 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.9 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
+<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.1.0 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
@@ -406,6 +406,7 @@
           <div class="btn-row">
             <button class="btn btn-primary" onclick="builderRandomize()">🎲 Randomize</button>
             <button class="btn btn-gold btn-sm" onclick="builderGoToSpecies()">View in Breeds</button>
+            <button class="btn-export" onclick="copyDeepLink('frog', document.getElementById('b-color').value, document.getElementById('b-pattern').value, document.getElementById('b-genus').value)" title="Copy shareable link to this frog">🔗 Copy link</button>
           </div>
         </div>
 
@@ -527,8 +528,9 @@
           </div>
           <div class="btn-row" style="margin-top:12px;flex-wrap:wrap">
             <button class="btn btn-sm" id="sb-clear-btn"      style="display:none;background:var(--surface0);color:var(--red);border:1px solid var(--surface1)"     onclick="sbClear()">🗑 Clear Set</button>
-            <button class="btn-export"  id="sb-export-png-btn" style="display:none" onclick="exportSbSet(true)"  title="Download transparent PNG of frogs">⬇ PNG</button>
-            <button class="btn-export"  id="sb-export-card-btn" style="display:none" onclick="exportSbSet(false)" title="Download set card PNG">⬇ Set card</button>
+            <button class="btn-export"  id="sb-export-png-btn"  style="display:none" onclick="exportSbSet(true)"       title="Download transparent PNG of frogs">⬇ PNG</button>
+            <button class="btn-export"  id="sb-export-card-btn" style="display:none" onclick="exportSbSet(false)"      title="Download set card PNG">⬇ Set card</button>
+            <button class="btn-export"  id="sb-copy-link-btn"   style="display:none" onclick="copyDeepLink('builder')" title="Copy shareable link to this set">🔗 Copy link</button>
           </div>
         </div>
 
@@ -1031,6 +1033,9 @@ function builderUpdate() {
   document.getElementById('b-color-dot').style.background = toHex(cr,cg,cb);
   const [,pr,pg,pb] = PATTERN_COLORS[patternId] || [null,128,128,128];
   document.getElementById('b-pattern-dot').style.background = toHex(pr,pg,pb);
+
+  // Keep URL in sync so the address bar is always shareable
+  history.replaceState(null, '', '#frog=' + colorId + '-' + patternId + '-' + genusId);
 }
 
 function builderRandomize() {
@@ -1372,7 +1377,29 @@ function renderSetsGrid(sets) {
     const end = Math.min(i + 20, sets.length);
     for (; i < end; i++) frag.appendChild(builder(sets[i], obs));
     grid.appendChild(frag);
-    if (i < sets.length) requestAnimationFrame(insertBatch);
+    if (i < sets.length) {
+      requestAnimationFrame(insertBatch);
+    } else if (_deepLinkSetCode) {
+      // All cards rendered — find, highlight, and scroll to the target set
+      requestAnimationFrame(() => {
+        const target = grid.querySelector('[data-set-code="' + _deepLinkSetCode + '"]');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          target.style.outline = '2px solid var(--mauve)';
+          target.style.outlineOffset = '3px';
+          target.style.transition = 'outline .2s';
+          setTimeout(() => { target.style.outline = ''; target.style.outlineOffset = ''; }, 3000);
+          // Update OG tags for this set
+          const matchedSet = allSets && allSets.find(s => String(s.code) === _deepLinkSetCode);
+          if (matchedSet) {
+            const fd = matchedSet.frogs.map(([count, colorId, patternId, genusId]) =>
+              ({ colorId, patternId, genusId, count }));
+            _updateOgForSet(matchedSet.name, matchedSet.code, fd);
+          }
+        }
+        _deepLinkSetCode = null;
+      });
+    }
   }
   insertBatch();
 }
@@ -1380,6 +1407,7 @@ function renderSetsGrid(sets) {
 function buildSetCard(set, obs) {
   const card = document.createElement('div');
   card.className = 'set-card';
+  card.dataset.setCode = set.code;
 
   const hdr = document.createElement('div');
   hdr.className = 'set-card-hdr';
@@ -1451,8 +1479,14 @@ function buildSetCard(set, obs) {
     ({ colorId, patternId, genusId, count }));
   expPng.onclick  = () => exportSetImage(setFrogData, set.name, set.code, true);
   expCard.onclick = () => exportSetImage(setFrogData, set.name, set.code, false);
+  const expCopyLink = document.createElement('button');
+  expCopyLink.className   = 'btn-export';
+  expCopyLink.title       = 'Copy shareable link to this set';
+  expCopyLink.textContent = '🔗 Copy link';
+  expCopyLink.onclick = () => copyDeepLink('set', set.code);
   expRow.appendChild(expPng);
   expRow.appendChild(expCard);
+  expRow.appendChild(expCopyLink);
   card.appendChild(expRow);
 
   return card;
@@ -1461,6 +1495,7 @@ function buildSetCard(set, obs) {
 function buildGameStrip(set, obs) {
   const strip = document.createElement('div');
   strip.className = 'set-game-strip';
+  if (set.code) strip.dataset.setCode = set.code;
 
   const frogsRow = document.createElement('div');
   frogsRow.className = 'set-game-frogs';
@@ -1527,8 +1562,14 @@ function buildGameStrip(set, obs) {
     ({ colorId, patternId, genusId, count }));
   expPng2.onclick  = () => exportSetImage(setFrogData2, set.name || set.setName, set.code || null, true);
   expCard2.onclick = () => exportSetImage(setFrogData2, set.name || set.setName, set.code || null, false);
+  const expCopyLink2 = document.createElement('button');
+  expCopyLink2.className   = 'btn-export';
+  expCopyLink2.title       = 'Copy shareable link to this set';
+  expCopyLink2.textContent = '🔗 Copy link';
+  if (set.code) expCopyLink2.onclick = () => copyDeepLink('set', set.code);
   expRow2.appendChild(expPng2);
   expRow2.appendChild(expCard2);
+  if (set.code) expRow2.appendChild(expCopyLink2);
   strip.appendChild(expRow2);
 
   return strip;
@@ -1658,21 +1699,25 @@ function renderSbPreview() {
   document.getElementById('sb-slot-badge').textContent = sbFrogs.length + ' / 8 frogs';
   if (addBtn) { addBtn.disabled = sbFrogs.length >= 8; addBtn.style.opacity = sbFrogs.length >= 8 ? '0.4' : ''; }
 
-  const exportPngBtn  = document.getElementById('sb-export-png-btn');
-  const exportCardBtn = document.getElementById('sb-export-card-btn');
+  const exportPngBtn   = document.getElementById('sb-export-png-btn');
+  const exportCardBtn  = document.getElementById('sb-export-card-btn');
+  const copyLinkBtn    = document.getElementById('sb-copy-link-btn');
+  const setVisible = (el, v) => { if (el) el.style.display = v ? '' : 'none'; };
   if (!sbFrogs.length) {
     card.style.display = 'none';
     emptyMsg.style.display = '';
-    clearBtn.style.display = 'none';
-    if (exportPngBtn)  exportPngBtn.style.display  = 'none';
-    if (exportCardBtn) exportCardBtn.style.display = 'none';
+    setVisible(clearBtn,      false);
+    setVisible(exportPngBtn,  false);
+    setVisible(exportCardBtn, false);
+    setVisible(copyLinkBtn,   false);
     return;
   }
   card.style.display = '';
   emptyMsg.style.display = 'none';
-  clearBtn.style.display = '';
-  if (exportPngBtn)  exportPngBtn.style.display  = '';
-  if (exportCardBtn) exportCardBtn.style.display = '';
+  setVisible(clearBtn,      true);
+  setVisible(exportPngBtn,  true);
+  setVisible(exportCardBtn, true);
+  setVisible(copyLinkBtn,   true);
 
   const frogsRow = document.getElementById('sb-frogs-row');
   frogsRow.innerHTML = '';
@@ -1738,6 +1783,175 @@ function renderSbPreview() {
 
       frogsRow.appendChild(tile);
     });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Deep Linking
+// ══════════════════════════════════════════════════════════════════════════════
+
+let _deepLinkSetCode  = null;
+let _toastTimeout     = null;
+
+function getDeepLinkUrl(type, ...args) {
+  const base = location.origin + location.pathname;
+  if (type === 'frog') {
+    const [c, p, g] = args;
+    return base + '#frog=' + c + '-' + p + '-' + g;
+  }
+  if (type === 'set') {
+    return base + '#set=' + args[0];
+  }
+  if (type === 'builder') {
+    const data = sbExportString();
+    const name = (document.getElementById('sb-set-name').value.trim() || 'My Custom Set');
+    return base + '#builder=' + encodeURIComponent(data) + '&name=' + encodeURIComponent(name);
+  }
+  return base;
+}
+
+function showLinkCopiedToast() {
+  let toast = document.getElementById('_link-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = '_link-toast';
+    Object.assign(toast.style, {
+      position: 'fixed', bottom: '40px', left: '50%', transform: 'translateX(-50%)',
+      background: 'var(--surface0)', color: 'var(--green)',
+      border: '1px solid var(--surface1)', borderRadius: '8px',
+      padding: '8px 18px', fontSize: '13px', fontWeight: '500',
+      zIndex: '9999', pointerEvents: 'none', transition: 'opacity .2s',
+      whiteSpace: 'nowrap',
+    });
+    toast.textContent = '🔗 Link copied!';
+    document.body.appendChild(toast);
+  }
+  toast.style.opacity = '1';
+  clearTimeout(_toastTimeout);
+  _toastTimeout = setTimeout(() => { toast.style.opacity = '0'; }, 2200);
+}
+
+function copyDeepLink(type, ...args) {
+  navigator.clipboard.writeText(getDeepLinkUrl(type, ...args)).then(showLinkCopiedToast);
+}
+
+// Update OG/Twitter meta + page title for a frog deep link (helps JS-aware platforms)
+async function _updateOgForFrog(c, p, g) {
+  const name = frogFullName(c, p, g);
+  document.title = name + ' — Splashdex';
+  document.querySelector('meta[property="og:title"]').setAttribute('content', name + ' — Splashdex');
+  document.querySelector('meta[property="og:description"]').setAttribute('content',
+    name + ' · Pocket Frogs frog reference');
+  try {
+    const SIZE = 256, PAD = 24, TEXT_H = 62;
+    const fc   = await _renderFrogOffscreen(c, p, g, SIZE);
+    const out  = document.createElement('canvas');
+    out.width  = SIZE + PAD * 2; out.height = SIZE + PAD * 2 + TEXT_H;
+    const ctx  = out.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, out.height);
+    grad.addColorStop(0, '#38384e'); grad.addColorStop(1, '#1e1e2e');
+    ctx.fillStyle = grad;
+    _roundRectPath(ctx, 0, 0, out.width, out.height, 20); ctx.fill();
+    ctx.drawImage(fc, PAD, PAD, SIZE, SIZE);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillStyle = 'rgba(205,214,244,0.90)';
+    ctx.font      = 'bold 20px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText(name, out.width / 2, SIZE + PAD + 10);
+    ctx.fillStyle = 'rgba(166,173,200,0.35)';
+    ctx.font      = '13px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText('splashdex', out.width / 2, SIZE + PAD + 36);
+    const dataUrl = out.toDataURL('image/png');
+    document.querySelector('meta[property="og:image"]').setAttribute('content', dataUrl);
+    document.querySelector('meta[name="twitter:image"]').setAttribute('content', dataUrl);
+  } catch (_) {}
+}
+
+async function _updateOgForSet(setName, weekCode, frogData) {
+  const title = setName + ' — Splashdex';
+  document.title = title;
+  document.querySelector('meta[property="og:title"]').setAttribute('content', title);
+  document.querySelector('meta[property="og:description"]').setAttribute('content',
+    setName + (weekCode ? ' · ' + parseWeekCode(weekCode) : '') + ' · Pocket Frogs weekly set');
+  try {
+    const FROG_SIZE = 88, GAP = 4;
+    const frogCanvases = [];
+    for (const f of frogData) {
+      for (let n = 0; n < f.count; n++)
+        frogCanvases.push(await _renderFrogOffscreen(f.colorId, f.patternId, f.genusId, FROG_SIZE));
+    }
+    if (!frogCanvases.length) return;
+    const totalW = frogCanvases.length * (FROG_SIZE + GAP) - GAP;
+    const H_PAD = 18, V_PAD = 14, LABEL_H = weekCode ? 72 : 58;
+    const out = document.createElement('canvas');
+    out.width  = totalW + H_PAD * 2;
+    out.height = FROG_SIZE + V_PAD * 2 + LABEL_H;
+    const ctx  = out.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, out.width, out.height);
+    grad.addColorStop(0, '#38384e'); grad.addColorStop(1, '#1e1e2e');
+    ctx.fillStyle = grad;
+    _roundRectPath(ctx, 0, 0, out.width, out.height, 20); ctx.fill();
+    frogCanvases.forEach((fc, i) =>
+      ctx.drawImage(fc, H_PAD + i * (FROG_SIZE + GAP), V_PAD, FROG_SIZE, FROG_SIZE));
+    const labelTop = FROG_SIZE + V_PAD;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    if (setName) {
+      ctx.fillStyle = 'rgba(205,214,244,0.55)';
+      ctx.font      = 'bold 18px "Segoe UI",system-ui,sans-serif';
+      ctx.fillText(setName, out.width / 2, labelTop + 8);
+    }
+    if (weekCode) {
+      ctx.fillStyle = 'rgba(166,173,200,0.35)';
+      ctx.font      = '12px "Segoe UI",system-ui,sans-serif';
+      ctx.fillText(parseWeekCode(weekCode), out.width / 2, labelTop + 32);
+    }
+    ctx.fillStyle = 'rgba(166,173,200,0.25)';
+    ctx.font      = '12px "Segoe UI",system-ui,sans-serif';
+    ctx.fillText('splashdex', out.width / 2, labelTop + (weekCode ? 50 : 34));
+    const dataUrl = out.toDataURL('image/png');
+    document.querySelector('meta[property="og:image"]').setAttribute('content', dataUrl);
+    document.querySelector('meta[name="twitter:image"]').setAttribute('content', dataUrl);
+  } catch (_) {}
+}
+
+function parseDeepLink() {
+  const hash = location.hash.slice(1);
+  if (!hash) return;
+  const params = {};
+  hash.split('&').forEach(part => {
+    const i = part.indexOf('=');
+    if (i > -1) params[part.slice(0, i)] = decodeURIComponent(part.slice(i + 1));
+  });
+
+  if (params.frog) {
+    const [c, p, g] = params.frog.split('-').map(Number);
+    if (!isNaN(c) && !isNaN(p) && !isNaN(g) &&
+        COLORS[c] && PATTERNS[p] !== undefined && GENERA[g] !== undefined) {
+      document.getElementById('b-color').value   = c;
+      document.getElementById('b-pattern').value = p;
+      document.getElementById('b-genus').value   = g;
+      tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
+      builderUpdate();
+      _updateOgForFrog(c, p, g);
+    }
+    return;
+  }
+
+  if (params.set) {
+    _deepLinkSetCode = String(params.set);
+    tab('sets', document.querySelector('.tab-btn:nth-child(4)'));
+    return;
+  }
+
+  if (params.builder) {
+    tab('setbuilder', document.querySelector('.tab-btn:nth-child(3)'));
+    const tryImport = () => {
+      if (!sbBuilderInitialized) { setTimeout(tryImport, 50); return; }
+      if (params.name) document.getElementById('sb-set-name').value = params.name;
+      document.getElementById('sb-import-text').value = params.builder;
+      sbImport();
+    };
+    tryImport();
+    return;
   }
 }
 
@@ -1931,6 +2145,7 @@ async function exportSetImage(frogData, setName, weekCode, transparent) {
 requestAnimationFrame(animateChroma);
 initBuilder();
 initSpecies();
+parseDeepLink();
 </script>
 </body>
 </html>
