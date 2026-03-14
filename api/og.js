@@ -15,11 +15,11 @@ const FONTS_DIR   = path.join(__dirname, '..', 'fonts');
 // Use register(Buffer) so a missing file throws clearly instead of silently failing.
 // Use unique aliases so weight matching is unambiguous.
 try {
-  GlobalFonts.register(fs.readFileSync(path.join(FONTS_DIR, 'Roboto-Regular.ttf')), 'RobotoReg');
-  GlobalFonts.register(fs.readFileSync(path.join(FONTS_DIR, 'Roboto-Bold.ttf')),    'RobotoBold');
-  console.log('[og] fonts registered:', GlobalFonts.families.map(f => f.family).join(', '));
+  GlobalFonts.register(fs.readFileSync(path.join(FONTS_DIR, 'Roboto-Regular.ttf')));
+  GlobalFonts.register(fs.readFileSync(path.join(FONTS_DIR, 'Roboto-Bold.ttf')));
+  console.log('[og] fonts loaded, has Roboto:', GlobalFonts.has('Roboto'));
 } catch (err) {
-  console.error('[og] font registration failed:', err.message);
+  console.error('[og] font load failed:', err.message);
 }
 
 // ── Sprite cache (warm across invocations in the same Lambda instance) ────────
@@ -169,10 +169,10 @@ module.exports = async (req, res) => {
       ctx.textAlign    = 'center';
       ctx.textBaseline = 'top';
       ctx.fillStyle    = 'rgba(205,214,244,0.90)';
-      ctx.font         = '36px RobotoBold';
+      ctx.font         = 'bold 36px Roboto';
       ctx.fillText(label, out.width / 2, SIZE + PAD + 16);
       ctx.fillStyle    = 'rgba(166,173,200,0.50)';
-      ctx.font         = '22px RobotoReg';
+      ctx.font         = '22px Roboto';
       ctx.fillText('splashdex', out.width / 2, SIZE + PAD + 62);
 
       res.end(out.toBuffer('image/png'));
@@ -229,17 +229,17 @@ module.exports = async (req, res) => {
       ctx.textBaseline = 'top';
 
       ctx.fillStyle = 'rgba(205,214,244,0.90)';
-      ctx.font      = '30px RobotoBold';
+      ctx.font      = 'bold 30px Roboto';
       ctx.fillText(setName, out.width / 2, labelTop + 12);
 
       if (weekCode) {
         ctx.fillStyle = 'rgba(166,173,200,0.55)';
-        ctx.font      = '20px RobotoReg';
+        ctx.font      = '20px Roboto';
         ctx.fillText(parseWeekCode(weekCode), out.width / 2, labelTop + 50);
       }
 
       ctx.fillStyle = 'rgba(166,173,200,0.40)';
-      ctx.font      = '18px RobotoReg';
+      ctx.font      = '18px Roboto';
       ctx.fillText('splashdex', out.width / 2, labelTop + (weekCode ? 78 : 50));
 
       res.end(out.toBuffer('image/png'));
