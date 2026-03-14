@@ -340,7 +340,7 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.5 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
+<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.6 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
@@ -514,16 +514,30 @@
 
       </div>
 
-      <!-- Import -->
+      <!-- Import / Export -->
       <div class="setbuilder-divider"></div>
-      <div class="sb-import-row">
-        <div class="form-label" style="margin-bottom:6px">Import Set Data</div>
-        <p style="font-size:11px;color:var(--overlay1);margin-bottom:8px">Paste exported set data from Pocket Frogs (e.g. <code style="background:var(--surface0);padding:1px 5px;border-radius:3px">1:2:7:16,1:1:10:16,…</code>). Overwrites current set.</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
-          <textarea class="form-input sb-import-area" id="sb-import-text" rows="3" placeholder="1:2:7:16,1:1:10:16,…" style="flex:1;min-width:200px;font-family:monospace;font-size:12px;resize:vertical"></textarea>
-          <button class="btn btn-primary btn-sm" style="align-self:flex-end" onclick="sbImport()">Import</button>
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+
+        <div class="sb-import-row" style="flex:1;min-width:220px">
+          <div class="form-label" style="margin-bottom:6px">Import Set Data</div>
+          <p style="font-size:11px;color:var(--overlay1);margin-bottom:8px">Paste exported set data from Pocket Frogs (e.g. <code style="background:var(--surface0);padding:1px 5px;border-radius:3px">1:2:7:16,…</code>). Overwrites current set.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
+            <textarea class="form-input" id="sb-import-text" rows="3" placeholder="1:2:7:16,1:1:10:16,…" style="flex:1;min-width:200px;font-family:monospace;font-size:12px;resize:vertical"></textarea>
+            <button class="btn btn-primary btn-sm" style="align-self:flex-end" onclick="sbImport()">Import</button>
+          </div>
+          <div id="sb-import-error" style="display:none;font-size:11px;color:var(--red);margin-top:6px"></div>
         </div>
-        <div id="sb-import-error" style="display:none;font-size:11px;color:var(--red);margin-top:6px"></div>
+
+        <div style="flex:1;min-width:220px">
+          <div class="form-label" style="margin-bottom:6px">Export Set Data</div>
+          <p style="font-size:11px;color:var(--overlay1);margin-bottom:8px">Save your current set as game-compatible data you can re-import later.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
+            <textarea class="form-input" id="sb-export-text" rows="3" placeholder="Add frogs to your set first…" readonly style="flex:1;min-width:200px;font-family:monospace;font-size:12px;resize:vertical;color:var(--subtext0)"></textarea>
+            <button class="btn btn-sm" id="sb-copy-btn" style="align-self:flex-end;background:var(--surface0);color:var(--subtext0);border:1px solid var(--surface1)" onclick="sbCopyExport()">Copy</button>
+          </div>
+          <div id="sb-copy-confirm" style="display:none;font-size:11px;color:var(--green);margin-top:6px">✓ Copied to clipboard</div>
+        </div>
+
       </div>
 
     </div>
@@ -1525,6 +1539,20 @@ function sbClear() {
   renderSbPreview();
 }
 
+function sbExportString() {
+  return sbFrogs.map(f => f.count + ':' + f.colorId + ':' + f.patternId + ':' + f.genusId).join(',');
+}
+
+function sbCopyExport() {
+  const str = sbExportString();
+  if (!str) return;
+  navigator.clipboard.writeText(str).then(() => {
+    const el = document.getElementById('sb-copy-confirm');
+    el.style.display = '';
+    setTimeout(() => { el.style.display = 'none'; }, 2000);
+  });
+}
+
 function sbImport() {
   const raw = document.getElementById('sb-import-text').value.trim();
   const errEl = document.getElementById('sb-import-error');
@@ -1552,6 +1580,9 @@ function sbImport() {
 }
 
 function renderSbPreview() {
+  const exportEl = document.getElementById('sb-export-text');
+  if (exportEl) exportEl.value = sbFrogs.length ? sbExportString() : '';
+
   const setName  = document.getElementById('sb-set-name').value.trim() || 'My Custom Set';
   const card     = document.getElementById('sb-set-card');
   const emptyMsg = document.getElementById('sb-empty-msg');
