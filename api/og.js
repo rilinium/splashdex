@@ -1,6 +1,6 @@
 'use strict';
 
-const { createCanvas, loadImage } = require('canvas');
+const { createCanvas, loadImage } = require('@napi-rs/canvas');
 const path = require('path');
 const fs   = require('fs');
 
@@ -163,7 +163,8 @@ module.exports = async (req, res) => {
       ctx.font         = '13px sans-serif';
       ctx.fillText('splashdex', out.width / 2, SIZE + PAD + 36);
 
-      return out.createPNGStream().pipe(res);
+      res.end(out.toBuffer('image/png'));
+      return;
     }
 
     // ── Set card (weekly or custom builder) ───────────────────────────────────
@@ -229,7 +230,8 @@ module.exports = async (req, res) => {
       ctx.font      = '12px sans-serif';
       ctx.fillText('splashdex', out.width / 2, labelTop + (weekCode ? 50 : 34));
 
-      return out.createPNGStream().pipe(res);
+      res.end(out.toBuffer('image/png'));
+      return;
     }
 
     // ── No params: serve banner ───────────────────────────────────────────────
