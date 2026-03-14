@@ -202,7 +202,7 @@ module.exports = async (req, res) => {
       const ctx    = out.getContext('2d');
       const pill   = Math.floor(out.height / 2);
 
-      drawBackground(ctx, out.width, out.height, true, pill);
+      drawBackground(ctx, out.width, out.height, false, pill);
       // Draw right-to-left so leftmost frog sits on top
       for (let i = frogCanvases.length - 1; i >= 0; i--)
         ctx.drawImage(frogCanvases[i], H_PAD + i * STEP, V_PAD);
