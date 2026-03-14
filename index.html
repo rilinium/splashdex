@@ -917,18 +917,30 @@ function renderSpeciesGrid(entries) {
 
 let allSets = null;
 let setsCanvasObserver = null;
+const setsCanvasData = new WeakMap(); // canvas -> [colorId, patternId, genusId]
 
 function getSetsObserver() {
   if (!setsCanvasObserver) {
     setsCanvasObserver = new IntersectionObserver(entries => {
       entries.forEach(entry => {
-        if (!entry.isIntersecting) return;
         const cv = entry.target;
-        renderFrog(cv, +cv.dataset.c, +cv.dataset.p, +cv.dataset.g);
-        setsCanvasObserver.unobserve(cv);
-        delete cv.dataset.c; delete cv.dataset.p; delete cv.dataset.g;
+        const data = setsCanvasData.get(cv);
+        if (!data) return;
+        if (entry.isIntersecting) {
+          if (!cv._setsRendered) {
+            renderFrog(cv, data[0], data[1], data[2]);
+            cv._setsRendered = true;
+          }
+        } else if (cv._setsRendered) {
+          // Free pixel memory when scrolled far out of view
+          chromaCanvases.delete(cv);
+          const ctx = cv.getContext('2d');
+          ctx.clearRect(0, 0, cv.width, cv.height);
+          _drawFrogPlaceholder(cv);
+          cv._setsRendered = false;
+        }
       });
-    }, { rootMargin: '400px 0px' });
+    }, { rootMargin: '600px 0px' });
   }
   return setsCanvasObserver;
 }
@@ -1019,7 +1031,7 @@ function filterSets(query) {
 
 function renderSetsGrid(sets) {
   const grid = document.getElementById('sets-grid');
-  if (setsCanvasObserver) grid.querySelectorAll('canvas[data-c]').forEach(cv => setsCanvasObserver.unobserve(cv));
+  if (setsCanvasObserver) grid.querySelectorAll('canvas').forEach(cv => setsCanvasObserver.unobserve(cv));
   grid.querySelectorAll('canvas').forEach(cv => chromaCanvases.delete(cv));
   grid.innerHTML = '';
 
@@ -1078,9 +1090,7 @@ function buildSetCard(set, obs) {
     const canvas = document.createElement('canvas');
     canvas.width = 56; canvas.height = 56;
     canvas.className = 'frog-thumb';
-    canvas.dataset.c = colorId;
-    canvas.dataset.p = patternId;
-    canvas.dataset.g = genusId;
+    setsCanvasData.set(canvas, [colorId, patternId, genusId]);
     _drawFrogPlaceholder(canvas);
     obs.observe(canvas);
     wrap.appendChild(canvas);
