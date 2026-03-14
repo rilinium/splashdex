@@ -132,11 +132,22 @@ function serveBanner(res) {
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
-  const { frog, set, builder, name, transparent } = req.query || {};
+  let { frog, set, builder, name, transparent, random } = req.query || {};
   const noBg = transparent !== undefined;
 
+  // Resolve ?random=frog / ?random=set into concrete values
+  if (random === 'frog') {
+    frog = `${Math.floor(Math.random() * COLORS.length)}-` +
+           `${Math.floor(Math.random() * PATTERN_COLORS.length)}-` +
+           `${Math.floor(Math.random() * GENERA.length)}`;
+  } else if (random === 'set') {
+    const sets = getSets();
+    if (sets.length) set = String(sets[Math.floor(Math.random() * sets.length)].code);
+  }
+
   res.setHeader('Content-Type', 'image/png');
-  res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+  res.setHeader('Cache-Control',
+    random !== undefined ? 'no-store' : 'public, max-age=604800, stale-while-revalidate=86400');
 
   try {
     // ── Single frog card ──────────────────────────────────────────────────────

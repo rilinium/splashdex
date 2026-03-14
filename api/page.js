@@ -3,7 +3,7 @@
 const fs   = require('fs');
 const path = require('path');
 
-const { frogFullName, parseWeekCode, parseSetsText } = require('./_data');
+const { COLORS, PATTERN_COLORS, GENERA, frogFullName, parseWeekCode, parseSetsText } = require('./_data');
 
 const HTML_PATH = path.join(__dirname, '..', 'index.html');
 const SETS_PATH = path.join(__dirname, '..', 'sets.txt');
@@ -28,10 +28,15 @@ function esc(str) {
 }
 
 module.exports = (req, res) => {
-  const { frog, set, builder, name, transparent } = req.query || {};
-  const tSuffix = transparent !== undefined ? '&transparent' : '';
-  const host   = req.headers.host;
-  const BASE   = `https://${host}`;
+  const { frog, set, builder, name, transparent, random } = req.query || {};
+  const tSuffix  = transparent !== undefined ? '&transparent' : '';
+  const host     = req.headers.host;
+  const BASE     = `https://${host}`;
+  let   noCache  = false;
+
+  // Parse path for random routing (/frog?random, /set?random)
+  let reqPath = '/';
+  try { reqPath = new URL(req.url, 'http://x').pathname; } catch (_) {}
 
   // ── Determine OG values ────────────────────────────────────────────────────
   let ogTitle = 'Splashdex';
@@ -39,7 +44,20 @@ module.exports = (req, res) => {
   let ogImage = `${BASE}/embedbanner.png`;
   let ogUrl   = `${BASE}/`;
 
-  if (frog) {
+  if (random !== undefined) {
+    noCache = true;
+    if (reqPath === '/frog') {
+      ogTitle = 'Random Frog — Splashdex';
+      ogDesc  = 'A surprise Pocket Frogs frog · Splashdex';
+      ogImage = `${BASE}/api/og?random=frog${tSuffix}`;
+      ogUrl   = `${BASE}/frog?random`;
+    } else if (reqPath === '/set') {
+      ogTitle = 'Random Set — Splashdex';
+      ogDesc  = 'A surprise Pocket Frogs weekly set · Splashdex';
+      ogImage = `${BASE}/api/og?random=set${tSuffix}`;
+      ogUrl   = `${BASE}/set?random`;
+    }
+  } else if (frog) {
     const parts = frog.split('-').map(Number);
     if (parts.length === 3 && parts.every(n => !isNaN(n))) {
       const [c, p, g] = parts;
@@ -87,6 +105,6 @@ module.exports = (req, res) => {
     .replace(/(<meta\s+name="twitter:image"\s+content=")[^"]*(")/,     `$1${esc(ogImage)}$2`);
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+  res.setHeader('Cache-Control', noCache ? 'no-store' : 'public, max-age=60, stale-while-revalidate=300');
   res.end(html);
 };
