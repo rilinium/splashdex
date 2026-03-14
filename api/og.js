@@ -1,6 +1,6 @@
 'use strict';
 
-const { createCanvas, loadImage } = require('@napi-rs/canvas');
+const { createCanvas, loadImage, GlobalFonts } = require('@napi-rs/canvas');
 const path = require('path');
 const fs   = require('fs');
 
@@ -9,6 +9,11 @@ const { COLORS, PATTERN_COLORS, GENERA, frogFullName, parseWeekCode, parseSetsTe
 const SPRITES_DIR = path.join(__dirname, '..', 'frog_sprites');
 const BANNER_PATH = path.join(__dirname, '..', 'embedbanner.png');
 const SETS_PATH   = path.join(__dirname, '..', 'sets.txt');
+const FONTS_DIR   = path.join(__dirname, '..', 'fonts');
+
+// ── Register bundled fonts (no system fonts on Lambda) ────────────────────────
+GlobalFonts.registerFromPath(path.join(FONTS_DIR, 'Roboto-Regular.ttf'), 'Roboto');
+GlobalFonts.registerFromPath(path.join(FONTS_DIR, 'Roboto-Bold.ttf'),    'Roboto');
 
 // ── Sprite cache (warm across invocations in the same Lambda instance) ────────
 const _imgCache = {};
@@ -103,7 +108,7 @@ function drawBackground(ctx, w, h, diagonal = false) {
   grad.addColorStop(0, '#38384e');
   grad.addColorStop(1, '#1e1e2e');
   ctx.fillStyle = grad;
-  roundRectPath(ctx, 0, 0, w, h, 20);
+  roundRectPath(ctx, 0, 0, w, h, 28);
   ctx.fill();
 }
 
@@ -144,7 +149,7 @@ module.exports = async (req, res) => {
       }
 
       const label  = frogFullName(c, p, g);
-      const SIZE   = 256, PAD = 24, TEXT_H = 62;
+      const SIZE   = 512, PAD = 48, TEXT_H = 110;
       const out    = createCanvas(SIZE + PAD * 2, SIZE + PAD * 2 + TEXT_H);
       const ctx    = out.getContext('2d');
 
@@ -157,11 +162,11 @@ module.exports = async (req, res) => {
       ctx.textAlign    = 'center';
       ctx.textBaseline = 'top';
       ctx.fillStyle    = 'rgba(205,214,244,0.90)';
-      ctx.font         = 'bold 20px sans-serif';
-      ctx.fillText(label, out.width / 2, SIZE + PAD + 10);
-      ctx.fillStyle    = 'rgba(166,173,200,0.35)';
-      ctx.font         = '13px sans-serif';
-      ctx.fillText('splashdex', out.width / 2, SIZE + PAD + 36);
+      ctx.font         = 'bold 36px Roboto';
+      ctx.fillText(label, out.width / 2, SIZE + PAD + 16);
+      ctx.fillStyle    = 'rgba(166,173,200,0.50)';
+      ctx.font         = '22px Roboto';
+      ctx.fillText('splashdex', out.width / 2, SIZE + PAD + 62);
 
       res.end(out.toBuffer('image/png'));
       return;
@@ -169,7 +174,7 @@ module.exports = async (req, res) => {
 
     // ── Set card (weekly or custom builder) ───────────────────────────────────
     if (set || builder) {
-      let setName = name || 'Custom Set';
+      let setName  = name || 'Custom Set';
       let rawFrogs = [];           // [[count, colorId, patternId, genusId], ...]
       let weekCode = null;
 
@@ -191,7 +196,7 @@ module.exports = async (req, res) => {
       }
 
       // Expand counts into individual frog canvases
-      const FROG_SIZE = 88, GAP = 4;
+      const FROG_SIZE = 160, GAP = 8;
       const frogCanvases = [];
       for (const [count, colorId, patternId, genusId] of rawFrogs) {
         for (let n = 0; n < count; n++) {
@@ -203,8 +208,8 @@ module.exports = async (req, res) => {
       if (!frogCanvases.length) return serveBanner(res);
 
       const totalW  = frogCanvases.length * (FROG_SIZE + GAP) - GAP;
-      const H_PAD   = 18, V_PAD = 14;
-      const LABEL_H = weekCode ? 72 : 58;
+      const H_PAD   = 28, V_PAD = 24;
+      const LABEL_H = weekCode ? 108 : 88;
       const out     = createCanvas(totalW + H_PAD * 2, FROG_SIZE + V_PAD * 2 + LABEL_H);
       const ctx     = out.getContext('2d');
 
@@ -216,19 +221,19 @@ module.exports = async (req, res) => {
       ctx.textAlign    = 'center';
       ctx.textBaseline = 'top';
 
-      ctx.fillStyle = 'rgba(205,214,244,0.55)';
-      ctx.font      = 'bold 18px sans-serif';
-      ctx.fillText(setName, out.width / 2, labelTop + 8);
+      ctx.fillStyle = 'rgba(205,214,244,0.90)';
+      ctx.font      = 'bold 30px Roboto';
+      ctx.fillText(setName, out.width / 2, labelTop + 12);
 
       if (weekCode) {
-        ctx.fillStyle = 'rgba(166,173,200,0.35)';
-        ctx.font      = '12px sans-serif';
-        ctx.fillText(parseWeekCode(weekCode), out.width / 2, labelTop + 32);
+        ctx.fillStyle = 'rgba(166,173,200,0.55)';
+        ctx.font      = '20px Roboto';
+        ctx.fillText(parseWeekCode(weekCode), out.width / 2, labelTop + 50);
       }
 
-      ctx.fillStyle = 'rgba(166,173,200,0.25)';
-      ctx.font      = '12px sans-serif';
-      ctx.fillText('splashdex', out.width / 2, labelTop + (weekCode ? 50 : 34));
+      ctx.fillStyle = 'rgba(166,173,200,0.40)';
+      ctx.font      = '18px Roboto';
+      ctx.fillText('splashdex', out.width / 2, labelTop + (weekCode ? 78 : 50));
 
       res.end(out.toBuffer('image/png'));
       return;
