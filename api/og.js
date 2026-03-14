@@ -4,7 +4,7 @@ const { createCanvas, loadImage } = require('@napi-rs/canvas');
 const path = require('path');
 const fs   = require('fs');
 
-const { COLORS, PATTERN_COLORS, frogFullName, parseWeekCode, parseSetsText } = require('./_data');
+const { COLORS, PATTERN_COLORS, GENERA, frogFullName, parseWeekCode, parseSetsText } = require('./_data');
 
 const SPRITES_DIR = path.join(__dirname, '..', 'frog_sprites');
 const BANNER_PATH = path.join(__dirname, '..', 'embedbanner.png');
@@ -139,7 +139,7 @@ module.exports = async (req, res) => {
     // ── Single frog card ──────────────────────────────────────────────────────
     if (frog) {
       const [c, p, g] = frog.split('-').map(Number);
-      if ([c, p, g].some(isNaN) || !COLORS[c] || COLORS[g] === undefined) {
+      if ([c, p, g].some(isNaN) || !COLORS[c] || !PATTERN_COLORS[p] || !GENERA[g]) {
         return serveBanner(res);
       }
 
