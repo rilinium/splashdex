@@ -288,8 +288,6 @@ module.exports = async (req, res) => {
       return res.end(png);
     }
 
-
-  try {
     // ── Single frog card ──────────────────────────────────────────────────────
     if (frog) {
       const [c, p, g] = frog.split('-').map(Number);
