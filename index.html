@@ -327,6 +327,10 @@
       <input class="search-input" type="search" id="sets-search"
              placeholder="Search set names or frog species…"
              oninput="filterSets(this.value)">
+      <select class="filter-select" id="sets-sort" onchange="filterSets(document.getElementById('sets-search').value)">
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+      </select>
       <span class="count-lbl" id="sets-count"></span>
     </div>
     <div id="sets-status" class="status-loading">Fetching sets…</div>
@@ -949,7 +953,7 @@ function parseSetsText(raw) {
     if (frogs.length > 0) sets.push({ code, name, frogs });
     i += 3;
   }
-  return sets.reverse(); // newest first
+  return sets; // oldest-first from file; caller applies sort
 }
 
 function parseWeekCode(code) {
@@ -999,13 +1003,15 @@ async function loadSets() {
 function filterSets(query) {
   if (!allSets) return;
   const q = query.trim().toLowerCase();
-  const filtered = q
+  const oldest = document.getElementById('sets-sort').value === 'oldest';
+  let filtered = q
     ? allSets.filter(set => {
         if (set.name.toLowerCase().includes(q)) return true;
         return set.frogs.some(([,cId,pId,gId]) =>
           frogFullName(cId, pId, gId).toLowerCase().includes(q));
       })
-    : allSets;
+    : [...allSets];
+  if (oldest) filtered.reverse();
 
   document.getElementById('sets-count').textContent =
     filtered.length + ' / ' + allSets.length + ' sets';
