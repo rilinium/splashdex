@@ -28,7 +28,8 @@ function esc(str) {
 }
 
 module.exports = (req, res) => {
-  const { frog, set, builder, name } = req.query || {};
+  const { frog, set, builder, name, transparent } = req.query || {};
+  const tSuffix = transparent !== undefined ? '&transparent' : '';
   const host   = req.headers.host;
   const BASE   = `https://${host}`;
 
@@ -45,8 +46,8 @@ module.exports = (req, res) => {
       const fname     = frogFullName(c, p, g);
       ogTitle = `${fname} — Splashdex`;
       ogDesc  = `${fname} · Pocket Frogs frog reference`;
-      ogImage = `${BASE}/api/og?frog=${encodeURIComponent(frog)}`;
-      ogUrl   = `${BASE}/frog?frog=${encodeURIComponent(frog)}`;
+      ogImage = `${BASE}/api/og?frog=${encodeURIComponent(frog)}${tSuffix}`;
+      ogUrl   = `${BASE}/frog?frog=${encodeURIComponent(frog)}${tSuffix}`;
     }
   } else if (set) {
     const found = getSets().find(s => String(s.code) === String(set));
@@ -57,13 +58,13 @@ module.exports = (req, res) => {
       ogTitle = `Weekly Set — Splashdex`;
       ogDesc  = 'Pocket Frogs weekly set · Splashdex';
     }
-    ogImage = `${BASE}/api/og?set=${encodeURIComponent(set)}`;
-    ogUrl   = `${BASE}/set?set=${encodeURIComponent(set)}`;
+    ogImage = `${BASE}/api/og?set=${encodeURIComponent(set)}${tSuffix}`;
+    ogUrl   = `${BASE}/set?set=${encodeURIComponent(set)}${tSuffix}`;
   } else if (builder && name) {
     ogTitle = `${name} — Splashdex`;
     ogDesc  = `${name} · Custom set · Splashdex`;
-    ogImage = `${BASE}/api/og?builder=${encodeURIComponent(builder)}&name=${encodeURIComponent(name)}`;
-    ogUrl   = `${BASE}/customset?builder=${encodeURIComponent(builder)}&name=${encodeURIComponent(name)}`;
+    ogImage = `${BASE}/api/og?builder=${encodeURIComponent(builder)}&name=${encodeURIComponent(name)}${tSuffix}`;
+    ogUrl   = `${BASE}/customset?builder=${encodeURIComponent(builder)}&name=${encodeURIComponent(name)}${tSuffix}`;
   }
 
   // ── Read and patch index.html ──────────────────────────────────────────────

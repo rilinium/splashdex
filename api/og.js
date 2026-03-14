@@ -132,7 +132,8 @@ function serveBanner(res) {
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
-  const { frog, set, builder, name } = req.query || {};
+  const { frog, set, builder, name, transparent } = req.query || {};
+  const noBg = transparent !== undefined;
 
   res.setHeader('Content-Type', 'image/png');
   res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
@@ -149,8 +150,10 @@ module.exports = async (req, res) => {
       const out    = createCanvas(SIZE + PAD * 2, SIZE + PAD * 2);
       const ctx    = out.getContext('2d');
 
-      const bgImg  = await loadImage(FROGBG_PATH);
-      ctx.drawImage(bgImg, 0, 0, out.width, out.height);
+      if (!noBg) {
+        const bgImg = await loadImage(FROGBG_PATH);
+        ctx.drawImage(bgImg, 0, 0, out.width, out.height);
+      }
 
       const frogCv = createCanvas(SIZE, SIZE);
       await renderFrog(frogCv, c, p, g);
@@ -202,7 +205,7 @@ module.exports = async (req, res) => {
       const ctx    = out.getContext('2d');
       const pill   = Math.floor(out.height / 2);
 
-      drawBackground(ctx, out.width, out.height, false, pill);
+      if (!noBg) drawBackground(ctx, out.width, out.height, false, pill);
       // Draw right-to-left so leftmost frog sits on top
       for (let i = frogCanvases.length - 1; i >= 0; i--)
         ctx.drawImage(frogCanvases[i], H_PAD + i * STEP, V_PAD);
