@@ -184,7 +184,8 @@ module.exports = async (req, res) => {
 
       if (p === CHROMA_ID) {
         // ── Animated GIF: cycle hue through the Chroma pattern layer ──────────
-        const bgImg = noBg ? null : await loadImage(FROGBG_PATH);
+        // GIF has no real alpha; always draw the background regardless of noBg
+        const bgImg = await loadImage(FROGBG_PATH);
         const enc   = makeEncoder(W, H);
 
         for (let f = 0; f < GIF_FRAMES; f++) {
@@ -192,7 +193,7 @@ module.exports = async (req, res) => {
           const rgb = hslToRgb(hue, 1.0, 0.55);
           const out = createCanvas(W, H);
           const ctx = out.getContext('2d');
-          if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
+          ctx.drawImage(bgImg, 0, 0, W, H);
           const frogCv = createCanvas(SIZE, SIZE);
           await renderFrog(frogCv, c, p, g, rgb);
           ctx.drawImage(frogCv, PAD, PAD);
@@ -276,7 +277,8 @@ module.exports = async (req, res) => {
 
           const out = createCanvas(W, H);
           const ctx = out.getContext('2d');
-          if (!noBg) drawBackground(ctx, W, H, false, pill);
+          // GIF has no real alpha; always draw bg with square corners (r=0)
+          drawBackground(ctx, W, H, false, 0);
           // Right-to-left so leftmost frog is on top
           for (let i = slots.length - 1; i >= 0; i--)
             ctx.drawImage(frameCanvases[i], H_PAD + i * STEP, V_PAD);
