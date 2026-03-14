@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Splashdex — Pocket Frogs</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
   <style>
     /* ── Catppuccin Mocha ── */
     :root {
@@ -236,7 +237,7 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">v1.1.0</div>
+<div class="hdr-version">v1.1.1</div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
@@ -833,17 +834,17 @@ function initSpecies() {
   const patternFilter = document.getElementById('species-pattern-filter');
   const genusFilter   = document.getElementById('species-genus-filter');
 
-  COLORS.forEach((c, id) => {
+  Object.entries(COLORS).forEach(([id, c]) => {
     const o = document.createElement('option');
     o.value = id; o.textContent = c[0];
     colorFilter.appendChild(o);
   });
-  PATTERNS.forEach((p, id) => {
+  Object.entries(PATTERNS).forEach(([id, p]) => {
     const o = document.createElement('option');
     o.value = id; o.textContent = p;
     patternFilter.appendChild(o);
   });
-  GENERA.forEach((g, id) => {
+  Object.entries(GENERA).forEach(([id, g]) => {
     const o = document.createElement('option');
     o.value = id; o.textContent = g;
     genusFilter.appendChild(o);
@@ -861,12 +862,16 @@ function filterSpecies(query) {
   const patternFilter= patternVal !== '' ? parseInt(patternVal) : null;
   const genusFilter  = genusVal   !== '' ? parseInt(genusVal)   : null;
 
+  const colorKeys   = Object.keys(COLORS).map(Number);
+  const patternKeys = Object.keys(PATTERNS).map(Number);
+  const genusKeys   = Object.keys(GENERA).map(Number);
+
   const filtered = [];
-  for (let c = 0; c < COLORS.length; c++) {
+  for (const c of colorKeys) {
     if (colorFilter !== null && c !== colorFilter) continue;
-    for (let p = 0; p < PATTERNS.length; p++) {
+    for (const p of patternKeys) {
       if (patternFilter !== null && p !== patternFilter) continue;
-      for (let g = 0; g < GENERA.length; g++) {
+      for (const g of genusKeys) {
         if (genusFilter !== null && g !== genusFilter) continue;
         if (q && !frogFullName(c, p, g).toLowerCase().includes(q)) continue;
         filtered.push([c, p, g]);
