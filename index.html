@@ -2159,6 +2159,8 @@ initBuilder();
 initSpecies();
 _builderInitDone = true;   // now replaceState is safe to use in builderUpdate
 parseDeepLink();
+// Stamp the initial random frog into the URL if no deep link was active
+if (!/^\?(frog|set|builder)=/.test(_initialSearch)) builderUpdate();
 </script>
 </body>
 </html>
