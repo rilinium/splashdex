@@ -236,11 +236,11 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">v1.0.0</div>
+<div class="hdr-version">v1.1.0</div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
-  <button class="tab-btn"        onclick="tab('species', this)">📖 Named Species</button>
+  <button class="tab-btn"        onclick="tab('species', this)">🐸 Breeds</button>
   <button class="tab-btn"        onclick="tab('sets', this)">📅 Weekly Sets</button>
 </nav>
 
@@ -282,7 +282,7 @@
           </div>
           <div class="btn-row">
             <button class="btn btn-primary" onclick="builderRandomize()">🎲 Randomize</button>
-            <button class="btn btn-gold btn-sm" onclick="builderGoToSpecies()">View in Species</button>
+            <button class="btn btn-gold btn-sm" onclick="builderGoToSpecies()">View in Breeds</button>
           </div>
         </div>
 
@@ -301,14 +301,17 @@
     </div>
   </div>
 
-  <!-- ── Named Species ── -->
+  <!-- ── Breeds ── -->
   <div class="tab-panel" id="tab-species">
     <div class="species-toolbar">
       <input class="search-input" type="search" id="species-search"
-             placeholder="Search species, color, genus…"
+             placeholder="Search color, pattern, genus…"
              oninput="filterSpecies(this.value)">
       <select class="filter-select" id="species-color-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
         <option value="">All Colors</option>
+      </select>
+      <select class="filter-select" id="species-pattern-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
+        <option value="">All Patterns</option>
       </select>
       <select class="filter-select" id="species-genus-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
         <option value="">All Genera</option>
@@ -781,14 +784,16 @@ function builderRandomize() {
 }
 
 function builderGoToSpecies() {
-  // Switch to species tab and scroll to matching species if it exists
   const colorId   = parseInt(document.getElementById('b-color').value);
   const patternId = parseInt(document.getElementById('b-pattern').value);
   const genusId   = parseInt(document.getElementById('b-genus').value);
-  const targetName = frogFullName(colorId, patternId, genusId);
-  document.getElementById('species-search').value = targetName;
+  // Set filters to exact match, clear search
+  document.getElementById('species-color-filter').value   = colorId;
+  document.getElementById('species-pattern-filter').value = patternId;
+  document.getElementById('species-genus-filter').value   = genusId;
+  document.getElementById('species-search').value = '';
   tab('species', document.querySelector('.tab-btn:nth-child(2)'));
-  filterSpecies(targetName);
+  filterSpecies('');
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -796,41 +801,51 @@ function builderGoToSpecies() {
 // ══════════════════════════════════════════════════════════════════════════════
 
 let speciesObserver = null;
+const breedsCanvasData = new WeakMap(); // canvas -> [colorId, patternId, genusId]
 
 function getSpeciesObserver() {
   if (!speciesObserver) {
     speciesObserver = new IntersectionObserver(entries => {
       entries.forEach(entry => {
-        if (!entry.isIntersecting) return;
         const cv = entry.target;
-        renderFrog(cv, +cv.dataset.c, +cv.dataset.p, +cv.dataset.g);
-        speciesObserver.unobserve(cv);
-        delete cv.dataset.c; delete cv.dataset.p; delete cv.dataset.g;
+        const data = breedsCanvasData.get(cv);
+        if (!data) return;
+        if (entry.isIntersecting) {
+          if (!cv._breedsRendered) {
+            renderFrog(cv, data[0], data[1], data[2]);
+            cv._breedsRendered = true;
+          }
+        } else if (cv._breedsRendered) {
+          chromaCanvases.delete(cv);
+          const ctx = cv.getContext('2d');
+          ctx.clearRect(0, 0, cv.width, cv.height);
+          _drawFrogPlaceholder(cv);
+          cv._breedsRendered = false;
+        }
       });
-    }, { rootMargin: '300px 0px' });
+    }, { rootMargin: '600px 0px' });
   }
   return speciesObserver;
 }
 
 function initSpecies() {
-  // Populate filter dropdowns
-  const colorFilter = document.getElementById('species-color-filter');
-  const genusFilter = document.getElementById('species-genus-filter');
+  const colorFilter   = document.getElementById('species-color-filter');
+  const patternFilter = document.getElementById('species-pattern-filter');
+  const genusFilter   = document.getElementById('species-genus-filter');
 
-  // Collect unique colors/genera in species list
-  const usedColors = new Set(), usedGenera = new Set();
-  Object.values(FROG_TYPES).forEach(([colorId, genusId]) => {
-    usedColors.add(colorId); usedGenera.add(genusId);
-  });
-
-  [...usedColors].sort((a,b)=>a-b).forEach(id => {
+  COLORS.forEach((c, id) => {
     const o = document.createElement('option');
-    o.value = id; o.textContent = (COLORS[id]||[String(id)])[0];
+    o.value = id; o.textContent = c[0];
     colorFilter.appendChild(o);
   });
-  [...usedGenera].sort((a,b)=>a-b).forEach(id => {
+  PATTERNS.forEach((p, id) => {
     const o = document.createElement('option');
-    o.value = id; o.textContent = GENERA[id] || String(id);
+    o.value = id; o.textContent = p;
+    patternFilter.appendChild(o);
+  });
+  GENERA.forEach((g, id) => {
+    const o = document.createElement('option');
+    o.value = id; o.textContent = g;
     genusFilter.appendChild(o);
   });
 
@@ -838,79 +853,85 @@ function initSpecies() {
 }
 
 function filterSpecies(query) {
-  const q = query.trim().toLowerCase();
-  const colorFilter = parseInt(document.getElementById('species-color-filter').value);
-  const genusFilter = parseInt(document.getElementById('species-genus-filter').value);
+  const q            = query.trim().toLowerCase();
+  const colorVal     = document.getElementById('species-color-filter').value;
+  const patternVal   = document.getElementById('species-pattern-filter').value;
+  const genusVal     = document.getElementById('species-genus-filter').value;
+  const colorFilter  = colorVal   !== '' ? parseInt(colorVal)   : null;
+  const patternFilter= patternVal !== '' ? parseInt(patternVal) : null;
+  const genusFilter  = genusVal   !== '' ? parseInt(genusVal)   : null;
 
-  const entries = Object.entries(FROG_TYPES);
-  const filtered = entries.filter(([id, [colorId, genusId, patternId, name]]) => {
-    if (!isNaN(colorFilter) && colorId !== colorFilter) return false;
-    if (!isNaN(genusFilter) && genusId !== genusFilter) return false;
-    if (q) {
-      const fullName = name.toLowerCase();
-      if (!fullName.includes(q)) return false;
+  const filtered = [];
+  for (let c = 0; c < COLORS.length; c++) {
+    if (colorFilter !== null && c !== colorFilter) continue;
+    for (let p = 0; p < PATTERNS.length; p++) {
+      if (patternFilter !== null && p !== patternFilter) continue;
+      for (let g = 0; g < GENERA.length; g++) {
+        if (genusFilter !== null && g !== genusFilter) continue;
+        if (q && !frogFullName(c, p, g).toLowerCase().includes(q)) continue;
+        filtered.push([c, p, g]);
+      }
     }
-    return true;
-  });
+  }
 
   document.getElementById('species-count').textContent =
-    filtered.length + ' / ' + entries.length + ' species';
+    filtered.length.toLocaleString() + ' / 44,160 breeds';
 
   renderSpeciesGrid(filtered);
 }
 
-function renderSpeciesGrid(entries) {
+function renderSpeciesGrid(combos) {
   const grid = document.getElementById('species-grid');
-  // Disconnect old observers
-  if (speciesObserver) grid.querySelectorAll('canvas[data-c]').forEach(cv => speciesObserver.unobserve(cv));
+  if (speciesObserver) grid.querySelectorAll('canvas').forEach(cv => speciesObserver.unobserve(cv));
   grid.querySelectorAll('canvas').forEach(cv => chromaCanvases.delete(cv));
   grid.innerHTML = '';
 
+  if (!combos.length) return;
   const obs = getSpeciesObserver();
-  const frag = document.createDocumentFragment();
 
-  entries.forEach(([id, [colorId, genusId, patternId, name]]) => {
-    const card = document.createElement('div');
-    card.className = 'species-card';
-    card.title = name;
-    card.onclick = () => {
-      // Jump to builder with this frog's settings
-      document.getElementById('b-color').value   = colorId;
-      document.getElementById('b-pattern').value = patternId;
-      document.getElementById('b-genus').value   = genusId;
-      tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
-      builderUpdate();
-    };
+  let i = 0;
+  function insertBatch() {
+    const frag = document.createDocumentFragment();
+    const end = Math.min(i + 40, combos.length);
+    for (; i < end; i++) {
+      const [colorId, patternId, genusId] = combos[i];
+      const card = document.createElement('div');
+      card.className = 'species-card';
+      const label = frogFullName(colorId, patternId, genusId);
+      card.title = label;
+      card.onclick = () => {
+        document.getElementById('b-color').value   = colorId;
+        document.getElementById('b-pattern').value = patternId;
+        document.getElementById('b-genus').value   = genusId;
+        tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
+        builderUpdate();
+      };
 
-    const canvas = document.createElement('canvas');
-    canvas.width = 72; canvas.height = 72;
-    canvas.className = 'species-canvas frog-thumb';
-    canvas.dataset.c = colorId;
-    canvas.dataset.p = patternId;
-    canvas.dataset.g = genusId;
-    _drawFrogPlaceholder(canvas);
-    obs.observe(canvas);
+      const canvas = document.createElement('canvas');
+      canvas.width = 72; canvas.height = 72;
+      canvas.className = 'species-canvas frog-thumb';
+      breedsCanvasData.set(canvas, [colorId, patternId, genusId]);
+      _drawFrogPlaceholder(canvas);
+      obs.observe(canvas);
 
-    const nameEl = document.createElement('div');
-    nameEl.className = 'species-name';
-    nameEl.textContent = name;
+      const nameEl = document.createElement('div');
+      nameEl.className = 'species-name';
+      nameEl.textContent = label;
 
-    const idEl = document.createElement('div');
-    idEl.className = 'species-id';
-    idEl.textContent = '#' + id;
+      const dexId = colorId * 1920 + patternId * 120 + genusId;
+      const idEl = document.createElement('div');
+      idEl.className = 'species-id';
+      idEl.textContent = '#' + dexId;
 
-    const genusEl = document.createElement('div');
-    genusEl.className = 'species-genus-badge';
-    genusEl.textContent = GENERA[genusId] || ('Gen' + genusId);
-
-    card.appendChild(canvas);
-    card.appendChild(nameEl);
-    card.appendChild(genusEl);
-    card.appendChild(idEl);
-    frag.appendChild(card);
-  });
-
-  grid.appendChild(frag);
+      card.appendChild(canvas);
+      card.appendChild(nameEl);
+      card.appendChild(idEl);
+      frag.appendChild(card);
+    }
+    grid.appendChild(frag);
+    if (i < combos.length) requestAnimationFrame(insertBatch);
+  }
+  insertBatch();
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
