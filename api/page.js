@@ -60,8 +60,9 @@ module.exports = (req, res) => {
       const fname     = frogFullName(c, p, g);
       const isChroma  = p === CHROMA_ID;
       const gifSuffix = isChroma ? '&gif=1' : '';
+      const dexIndex = c * 1920 + p * 120 + g;
       ogTitle = `${fname} — Splashdex`;
-      ogDesc  = `${fname} · Pocket Frogs frog reference`;
+      ogDesc  = `${fname} · Splashdex Index #${dexIndex}`;
       ogImage = `${BASE}/api/og?frog=${encodeURIComponent(frog)}${gifSuffix}${tSuffix}`;
       ogUrl   = `${BASE}/frog?frog=${encodeURIComponent(frog)}${tSuffix}`;
       if (isChroma) {
