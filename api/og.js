@@ -6,9 +6,10 @@ const fs   = require('fs');
 
 const { COLORS, PATTERN_COLORS, GENERA, frogFullName, parseWeekCode, parseSetsText } = require('./_data');
 
-const SPRITES_DIR = path.join(__dirname, '..', 'frog_sprites');
-const BANNER_PATH = path.join(__dirname, '..', 'embedbanner.png');
-const SETS_PATH   = path.join(__dirname, '..', 'sets.txt');
+const SPRITES_DIR  = path.join(__dirname, '..', 'frog_sprites');
+const BANNER_PATH  = path.join(__dirname, '..', 'embedbanner.png');
+const FROGBG_PATH  = path.join(__dirname, '..', 'embedfrogbg.png');
+const SETS_PATH    = path.join(__dirname, '..', 'sets.txt');
 
 
 // ── Sprite cache (warm across invocations in the same Lambda instance) ────────
@@ -101,7 +102,7 @@ function drawBackground(ctx, w, h, diagonal = false, r = 28) {
   const grad = diagonal
     ? ctx.createLinearGradient(0, 0, w, h)
     : ctx.createLinearGradient(0, 0, 0, h);
-  grad.addColorStop(0, '#38384e');
+  grad.addColorStop(0, '#CBD2D8');
   grad.addColorStop(1, '#1e1e2e');
   ctx.fillStyle = grad;
   roundRectPath(ctx, 0, 0, w, h, r);
@@ -148,7 +149,8 @@ module.exports = async (req, res) => {
       const out    = createCanvas(SIZE + PAD * 2, SIZE + PAD * 2);
       const ctx    = out.getContext('2d');
 
-      drawBackground(ctx, out.width, out.height);
+      const bgImg  = await loadImage(FROGBG_PATH);
+      ctx.drawImage(bgImg, 0, 0, out.width, out.height);
 
       const frogCv = createCanvas(SIZE, SIZE);
       await renderFrog(frogCv, c, p, g);
