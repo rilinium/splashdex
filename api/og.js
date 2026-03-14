@@ -184,16 +184,15 @@ module.exports = async (req, res) => {
 
       if (p === CHROMA_ID) {
         // ── Animated GIF: cycle hue through the Chroma pattern layer ──────────
-        // Use a simple gradient background instead of embedfrogbg.png —
-        // complex photographic backgrounds blow GIF's 256-colour palette.
-        const enc = makeEncoder(W, H);
+        const bgImg = await loadImage(FROGBG_PATH);
+        const enc   = makeEncoder(W, H);
 
         for (let f = 0; f < GIF_FRAMES; f++) {
           const hue = (f / GIF_FRAMES) * 360;
           const rgb = hslToRgb(hue, 1.0, 0.55);
           const out = createCanvas(W, H);
           const ctx = out.getContext('2d');
-          drawBackground(ctx, W, H, false, 0);
+          ctx.drawImage(bgImg, 0, 0, W, H);
           const frogCv = createCanvas(SIZE, SIZE);
           await renderFrog(frogCv, c, p, g, rgb);
           ctx.drawImage(frogCv, PAD, PAD);
