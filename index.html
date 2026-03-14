@@ -593,9 +593,12 @@
 </div>
 
 <script>
-// Capture search params immediately — before initBuilder() calls replaceState
+// Capture URL immediately — before any init code can overwrite it
+const _initialPath   = location.pathname;
 const _initialSearch = location.search;
 let   _builderInitDone = false;
+
+const _TAB_PATHS = { builder: '/frog', species: '/breeds', setbuilder: '/customset', sets: '/set' };
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Game Data
@@ -977,7 +980,7 @@ function toHex(r, g, b) {
 
 let setsInitialized = false;
 
-function tab(name, btn) {
+function tab(name, btn, _history = 'push') {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
@@ -985,6 +988,12 @@ function tab(name, btn) {
   if (name === 'sets'       && !setsInitialized)       { setsInitialized = true; loadSets(); }
   if (name === 'species'    && !breedsInitialized)     { breedsInitialized = true; filterSpecies(''); }
   if (name === 'setbuilder' && !sbBuilderInitialized)  { initSetBuilder(); }
+  if (_history !== 'none' && _builderInitDone && _TAB_PATHS[name]) {
+    (_history === 'replace' ? history.replaceState : history.pushState)
+      .call(history, null, '', _TAB_PATHS[name]);
+  }
+  // Re-stamp frog URL when returning to builder tab
+  if (_builderInitDone && name === 'builder') builderUpdate();
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1046,7 +1055,7 @@ function builderUpdate() {
 
   // Keep URL in sync — only after init, so the startup randomize doesn't clobber deep-link params
   if (_builderInitDone) {
-    history.replaceState(null, '', '?frog=' + colorId + '-' + patternId + '-' + genusId);
+    history.replaceState(null, '', '/frog?frog=' + colorId + '-' + patternId + '-' + genusId);
   }
 }
 
@@ -1806,20 +1815,20 @@ let _deepLinkSetCode  = null;
 let _toastTimeout     = null;
 
 function getDeepLinkUrl(type, ...args) {
-  const base = location.origin + location.pathname;
+  const origin = location.origin;
   if (type === 'frog') {
     const [c, p, g] = args;
-    return base + '?frog=' + c + '-' + p + '-' + g;
+    return origin + '/frog?frog=' + c + '-' + p + '-' + g;
   }
   if (type === 'set') {
-    return base + '?set=' + args[0];
+    return origin + '/set?set=' + args[0];
   }
   if (type === 'builder') {
     const data = sbExportString();
     const name = (document.getElementById('sb-set-name').value.trim() || 'My Custom Set');
-    return base + '?builder=' + encodeURIComponent(data) + '&name=' + encodeURIComponent(name);
+    return origin + '/customset?builder=' + encodeURIComponent(data) + '&name=' + encodeURIComponent(name);
   }
-  return base;
+  return origin + '/frog';
 }
 
 function showLinkCopiedToast() {
@@ -1926,14 +1935,52 @@ async function _updateOgForSet(setName, weekCode, frogData) {
 }
 
 function parseDeepLink() {
-  const search = _initialSearch.slice(1);   // strip leading '?', use pre-init snapshot
-  if (!search) return;
+  const path   = _initialPath;
+  const search = _initialSearch.slice(1);
   const params = {};
   search.split('&').forEach(part => {
     const i = part.indexOf('=');
     if (i > -1) params[part.slice(0, i)] = decodeURIComponent(part.slice(i + 1));
   });
 
+  // Helper: get tab button by tab name
+  const _btn = n => document.querySelector('.tab-btn:nth-child(' +
+    ({ builder: 1, species: 2, setbuilder: 3, sets: 4 }[n]) + ')');
+
+  // ── Path: /breeds ─────────────────────────────────────────────────────────
+  if (path === '/breeds') {
+    tab('species', _btn('species'), 'replace');
+    return;
+  }
+
+  // ── Path: /set  (also handles legacy /?set=) ──────────────────────────────
+  if (path === '/set' || params.set) {
+    tab('sets', _btn('sets'), 'replace');
+    if (params.set) {
+      _deepLinkSetCode = String(params.set);
+      history.replaceState(null, '', '/set?set=' + params.set);
+    }
+    return;
+  }
+
+  // ── Path: /customset  (also handles legacy /?builder=) ────────────────────
+  if (path === '/customset' || params.builder) {
+    tab('setbuilder', _btn('setbuilder'), 'replace');
+    if (params.builder) {
+      history.replaceState(null, '', '/customset?builder=' + encodeURIComponent(params.builder) +
+        (params.name ? '&name=' + encodeURIComponent(params.name) : ''));
+      const tryImport = () => {
+        if (!sbBuilderInitialized) { setTimeout(tryImport, 50); return; }
+        if (params.name) document.getElementById('sb-set-name').value = params.name;
+        document.getElementById('sb-import-text').value = params.builder;
+        sbImport();
+      };
+      tryImport();
+    }
+    return;
+  }
+
+  // ── Path: /frog or /  (builder tab, active by default) ────────────────────
   if (params.frog) {
     const [c, p, g] = params.frog.split('-').map(Number);
     if (!isNaN(c) && !isNaN(p) && !isNaN(g) &&
@@ -1941,28 +1988,9 @@ function parseDeepLink() {
       document.getElementById('b-color').value   = c;
       document.getElementById('b-pattern').value = p;
       document.getElementById('b-genus').value   = g;
-      tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
       builderUpdate();
       _updateOgForFrog(c, p, g);
     }
-    return;
-  }
-
-  if (params.set) {
-    _deepLinkSetCode = String(params.set);
-    tab('sets', document.querySelector('.tab-btn:nth-child(4)'));
-    return;
-  }
-
-  if (params.builder) {
-    tab('setbuilder', document.querySelector('.tab-btn:nth-child(3)'));
-    const tryImport = () => {
-      if (!sbBuilderInitialized) { setTimeout(tryImport, 50); return; }
-      if (params.name) document.getElementById('sb-set-name').value = params.name;
-      document.getElementById('sb-import-text').value = params.builder;
-      sbImport();
-    };
-    tryImport();
     return;
   }
 }
@@ -2159,8 +2187,19 @@ initBuilder();
 initSpecies();
 _builderInitDone = true;   // now replaceState is safe to use in builderUpdate
 parseDeepLink();
-// Stamp the initial random frog into the URL if no deep link was active
-if (!/^\?(frog|set|builder)=/.test(_initialSearch)) builderUpdate();
+// Stamp the initial random frog into the URL if we ended up on the builder tab with no specific frog
+if (!/^\/(breeds|set|customset)/.test(_initialPath) && !/\?frog=/.test(_initialSearch)) builderUpdate();
+
+// Back/forward navigation: switch tabs to match the new URL
+window.addEventListener('popstate', () => {
+  const p = location.pathname;
+  const _btn = n => document.querySelector('.tab-btn:nth-child(' +
+    ({ builder: 1, species: 2, setbuilder: 3, sets: 4 }[n]) + ')');
+  if (p === '/breeds')    return tab('species',    _btn('species'),    'none');
+  if (p === '/set')       return tab('sets',       _btn('sets'),       'none');
+  if (p === '/customset') return tab('setbuilder', _btn('setbuilder'), 'none');
+  tab('builder', _btn('builder'), 'none');
+});
 </script>
 </body>
 </html>

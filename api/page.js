@@ -46,7 +46,7 @@ module.exports = (req, res) => {
       ogTitle = `${fname} — Splashdex`;
       ogDesc  = `${fname} · Pocket Frogs frog reference`;
       ogImage = `${BASE}/api/og?frog=${encodeURIComponent(frog)}`;
-      ogUrl   = `${BASE}/?frog=${encodeURIComponent(frog)}`;
+      ogUrl   = `${BASE}/frog?frog=${encodeURIComponent(frog)}`;
     }
   } else if (set) {
     const found = getSets().find(s => String(s.code) === String(set));
@@ -58,12 +58,12 @@ module.exports = (req, res) => {
       ogDesc  = 'Pocket Frogs weekly set · Splashdex';
     }
     ogImage = `${BASE}/api/og?set=${encodeURIComponent(set)}`;
-    ogUrl   = `${BASE}/?set=${encodeURIComponent(set)}`;
+    ogUrl   = `${BASE}/set?set=${encodeURIComponent(set)}`;
   } else if (builder && name) {
     ogTitle = `${name} — Splashdex`;
     ogDesc  = `${name} · Custom set · Splashdex`;
     ogImage = `${BASE}/api/og?builder=${encodeURIComponent(builder)}&name=${encodeURIComponent(name)}`;
-    ogUrl   = `${BASE}/?builder=${encodeURIComponent(builder)}&name=${encodeURIComponent(name)}`;
+    ogUrl   = `${BASE}/customset?builder=${encodeURIComponent(builder)}&name=${encodeURIComponent(name)}`;
   }
 
   // ── Read and patch index.html ──────────────────────────────────────────────

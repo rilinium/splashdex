@@ -10,6 +10,7 @@
     }
   },
   "routes": [
+    { "src": "^/(frog|breeds|set|customset)$", "dest": "/api/page" },
     { "src": "^/$", "dest": "/api/page" },
     { "handle": "filesystem" }
   ]
