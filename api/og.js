@@ -97,14 +97,14 @@ function roundRectPath(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-function drawBackground(ctx, w, h, diagonal = false) {
+function drawBackground(ctx, w, h, diagonal = false, r = 28) {
   const grad = diagonal
     ? ctx.createLinearGradient(0, 0, w, h)
     : ctx.createLinearGradient(0, 0, 0, h);
   grad.addColorStop(0, '#38384e');
   grad.addColorStop(1, '#1e1e2e');
   ctx.fillStyle = grad;
-  roundRectPath(ctx, 0, 0, w, h, 28);
+  roundRectPath(ctx, 0, 0, w, h, r);
   ctx.fill();
 }
 
@@ -182,7 +182,7 @@ module.exports = async (req, res) => {
       }
 
       // Expand counts into individual frog canvases
-      const FROG_SIZE = 160, GAP = 8;
+      const FROG_SIZE = 160, OVERLAP = 44;
       const frogCanvases = [];
       for (const [count, colorId, patternId, genusId] of rawFrogs) {
         for (let n = 0; n < count; n++) {
@@ -193,14 +193,17 @@ module.exports = async (req, res) => {
       }
       if (!frogCanvases.length) return serveBanner(res);
 
-      const totalW = frogCanvases.length * (FROG_SIZE + GAP) - GAP;
-      const H_PAD  = 28, V_PAD = 24;
+      const STEP   = FROG_SIZE - OVERLAP;
+      const totalW = frogCanvases.length * STEP + OVERLAP; // = N*STEP + leftover
+      const H_PAD  = 28, V_PAD = 20;
       const out    = createCanvas(totalW + H_PAD * 2, FROG_SIZE + V_PAD * 2);
       const ctx    = out.getContext('2d');
+      const pill   = Math.floor(out.height / 2);
 
-      drawBackground(ctx, out.width, out.height, true);
-      frogCanvases.forEach((fc, i) =>
-        ctx.drawImage(fc, H_PAD + i * (FROG_SIZE + GAP), V_PAD));
+      drawBackground(ctx, out.width, out.height, true, pill);
+      // Draw right-to-left so leftmost frog sits on top
+      for (let i = frogCanvases.length - 1; i >= 0; i--)
+        ctx.drawImage(frogCanvases[i], H_PAD + i * STEP, V_PAD);
 
       res.end(out.toBuffer('image/png'));
       return;
