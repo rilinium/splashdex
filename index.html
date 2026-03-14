@@ -592,6 +592,10 @@
 </div>
 
 <script>
+// Capture the hash immediately — before initBuilder() calls replaceState
+const _initialHash = location.hash;
+let   _builderInitDone = false;
+
 // ══════════════════════════════════════════════════════════════════════════════
 // Game Data
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1034,8 +1038,10 @@ function builderUpdate() {
   const [,pr,pg,pb] = PATTERN_COLORS[patternId] || [null,128,128,128];
   document.getElementById('b-pattern-dot').style.background = toHex(pr,pg,pb);
 
-  // Keep URL in sync so the address bar is always shareable
-  history.replaceState(null, '', '#frog=' + colorId + '-' + patternId + '-' + genusId);
+  // Keep URL in sync — only after init, so the startup randomize doesn't clobber deep-link hashes
+  if (_builderInitDone) {
+    history.replaceState(null, '', '#frog=' + colorId + '-' + patternId + '-' + genusId);
+  }
 }
 
 function builderRandomize() {
@@ -1914,7 +1920,7 @@ async function _updateOgForSet(setName, weekCode, frogData) {
 }
 
 function parseDeepLink() {
-  const hash = location.hash.slice(1);
+  const hash = _initialHash.slice(1);   // use pre-init snapshot, not live location.hash
   if (!hash) return;
   const params = {};
   hash.split('&').forEach(part => {
@@ -2145,6 +2151,7 @@ async function exportSetImage(frogData, setName, weekCode, transparent) {
 requestAnimationFrame(animateChroma);
 initBuilder();
 initSpecies();
+_builderInitDone = true;   // now replaceState is safe to use in builderUpdate
 parseDeepLink();
 </script>
 </body>
