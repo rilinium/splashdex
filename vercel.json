@@ -9,7 +9,8 @@
       "includeFiles": "index.html,sets.txt"
     }
   },
-  "rewrites": [
-    { "source": "/", "destination": "/api/page" }
+  "routes": [
+    { "src": "^/$", "dest": "/api/page" },
+    { "handle": "filesystem" }
   ]
 }
