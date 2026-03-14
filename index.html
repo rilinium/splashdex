@@ -133,7 +133,7 @@
       border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
     }
-    #builder-canvas { image-rendering: pixelated; }
+    #builder-canvas { image-rendering: auto; }
     .frog-name-display {
       font-size: 14px; font-weight: 600; color: var(--text); text-align: center; min-height: 20px;
     }
@@ -184,7 +184,7 @@
       cursor: pointer; transition: border-color .15s;
     }
     .species-card:hover { border-color: var(--mauve); }
-    .species-canvas { image-rendering: pixelated; }
+    .species-canvas { image-rendering: auto; }
     .species-name { font-size: 11px; font-weight: 500; color: var(--text); text-align: center; line-height: 1.3; }
     .species-id { font-size: 10px; color: var(--overlay0); }
     .breeds-pagination {
@@ -229,7 +229,7 @@
       background: var(--surface0); border-radius: 6px;
       border-left: 2px solid var(--mauve);
     }
-    .frog-thumb { image-rendering: pixelated; }
+    .frog-thumb { image-rendering: auto; }
 
     /* ── Set Builder ── */
     .setbuilder-layout { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
@@ -340,7 +340,7 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.6 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
+<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.7 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
@@ -452,7 +452,7 @@
           <div class="setbuilder-frog-selector">
             <div class="builder-preview">
               <div class="preview-canvas-wrap" style="width:140px;height:140px">
-                <canvas id="sb-canvas" width="140" height="140" style="image-rendering:pixelated"></canvas>
+                <canvas id="sb-canvas" width="140" height="140" style="image-rendering:auto"></canvas>
               </div>
             </div>
             <div class="setbuilder-frog-controls">
@@ -888,8 +888,19 @@ function renderFrog(canvas, colorId, patternId, genusId) {
   const isGlass  = colorId  === 22;
   canvas.style.opacity = '';
 
-  const [, cr, cg, cb] = COLORS[colorId]         || [null, 128, 128, 128];
+  const [, cr, cg, cb] = COLORS[colorId]          || [null, 128, 128, 128];
   const [, pr, pg, pb] = PATTERN_COLORS[patternId] || [null, 128, 128, 128];
+
+  // HiDPI / Retina: scale canvas buffer up by devicePixelRatio, shrink back via CSS
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.width, cssH = canvas.height;
+  if (canvas.width !== cssW * dpr || canvas._dprSet !== dpr) {
+    canvas.width  = cssW * dpr;
+    canvas.height = cssH * dpr;
+    canvas.style.width  = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    canvas._dprSet = dpr;
+  }
   const w = canvas.width, h = canvas.height;
 
   Promise.all([
