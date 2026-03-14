@@ -1,0 +1,9 @@
+{
+  "name": "splashdex",
+  "version": "1.2.0",
+  "description": "Pocket Frogs breed reference, weekly sets, and frog builder",
+  "license": "MIT",
+  "dependencies": {
+    "canvas": "^2.11.2"
+  }
+}

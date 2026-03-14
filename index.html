@@ -354,7 +354,7 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.1.2 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
+<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.2.0 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
@@ -592,8 +592,8 @@
 </div>
 
 <script>
-// Capture the hash immediately — before initBuilder() calls replaceState
-const _initialHash = location.hash;
+// Capture search params immediately — before initBuilder() calls replaceState
+const _initialSearch = location.search;
 let   _builderInitDone = false;
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1014,7 +1014,7 @@ function initBuilder() {
   // Skip randomize when a frog deep link is present — parseDeepLink() will
   // call builderUpdate() with the correct values, and having two concurrent
   // renderFrog() calls creates a race where whichever sprite loads last wins.
-  if (!/^#frog=\d+-\d+-\d+/.test(_initialHash)) {
+  if (!/^\?frog=\d+-\d+-\d+/.test(_initialSearch)) {
     builderRandomize();
   }
 }
@@ -1043,9 +1043,9 @@ function builderUpdate() {
   const [,pr,pg,pb] = PATTERN_COLORS[patternId] || [null,128,128,128];
   document.getElementById('b-pattern-dot').style.background = toHex(pr,pg,pb);
 
-  // Keep URL in sync — only after init, so the startup randomize doesn't clobber deep-link hashes
+  // Keep URL in sync — only after init, so the startup randomize doesn't clobber deep-link params
   if (_builderInitDone) {
-    history.replaceState(null, '', '#frog=' + colorId + '-' + patternId + '-' + genusId);
+    history.replaceState(null, '', '?frog=' + colorId + '-' + patternId + '-' + genusId);
   }
 }
 
@@ -1808,15 +1808,15 @@ function getDeepLinkUrl(type, ...args) {
   const base = location.origin + location.pathname;
   if (type === 'frog') {
     const [c, p, g] = args;
-    return base + '#frog=' + c + '-' + p + '-' + g;
+    return base + '?frog=' + c + '-' + p + '-' + g;
   }
   if (type === 'set') {
-    return base + '#set=' + args[0];
+    return base + '?set=' + args[0];
   }
   if (type === 'builder') {
     const data = sbExportString();
     const name = (document.getElementById('sb-set-name').value.trim() || 'My Custom Set');
-    return base + '#builder=' + encodeURIComponent(data) + '&name=' + encodeURIComponent(name);
+    return base + '?builder=' + encodeURIComponent(data) + '&name=' + encodeURIComponent(name);
   }
   return base;
 }
@@ -1925,10 +1925,10 @@ async function _updateOgForSet(setName, weekCode, frogData) {
 }
 
 function parseDeepLink() {
-  const hash = _initialHash.slice(1);   // use pre-init snapshot, not live location.hash
-  if (!hash) return;
+  const search = _initialSearch.slice(1);   // strip leading '?', use pre-init snapshot
+  if (!search) return;
   const params = {};
-  hash.split('&').forEach(part => {
+  search.split('&').forEach(part => {
     const i = part.indexOf('=');
     if (i > -1) params[part.slice(0, i)] = decodeURIComponent(part.slice(i + 1));
   });

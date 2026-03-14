@@ -1,0 +1,15 @@
+{
+  "functions": {
+    "api/og.js": {
+      "includeFiles": "frog_sprites/**,embedbanner.png,sets.txt",
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "api/page.js": {
+      "includeFiles": "index.html,sets.txt"
+    }
+  },
+  "rewrites": [
+    { "source": "/", "destination": "/api/page" }
+  ]
+}
