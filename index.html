@@ -252,6 +252,37 @@
     }
     .set-frog-tile:hover .sb-remove-btn { opacity: 1; }
 
+    /* ── Game View ── */
+    .set-game-strip {
+      background: linear-gradient(160deg, #38384e 0%, #1e1e2e 100%);
+      border-radius: 20px;
+      padding: 14px 16px 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      margin-bottom: 10px;
+    }
+    .set-game-frogs {
+      display: flex; gap: 3px; align-items: flex-end; justify-content: center; flex-wrap: wrap;
+    }
+    .set-game-frog-wrap { position: relative; }
+    .set-game-frog-count {
+      position: absolute; bottom: 2px; right: 2px;
+      font-size: 9px; font-weight: 700; color: var(--yellow);
+      background: rgba(0,0,0,.5); border-radius: 3px; padding: 0 3px;
+    }
+    .set-game-label { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .set-game-name { font-size: 13px; color: rgba(205,214,244,.55); font-weight: 500; }
+    .set-game-week { font-size: 10px; color: rgba(166,173,200,.35); }
+
+    /* ── View Toggle ── */
+    .view-toggle { display: flex; gap: 3px; }
+    .view-toggle-btn {
+      padding: 5px 10px; border-radius: 6px; cursor: pointer;
+      border: 1px solid var(--surface1); font-size: 12px;
+      background: var(--surface0); color: var(--subtext0);
+      transition: background .1s, color .1s;
+    }
+    .view-toggle-btn.active { background: var(--surface1); color: var(--text); }
+
     /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -309,7 +340,7 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.4</div>
+<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.5</div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
@@ -461,7 +492,13 @@
 
         <!-- Right: live set preview -->
         <div class="setbuilder-preview">
-          <div class="form-label" style="margin-bottom:10px">Set Preview <span id="sb-slot-badge" style="font-size:10px;color:var(--overlay0);text-transform:none;letter-spacing:0;margin-left:6px">0 / 8 frogs</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <div class="form-label" style="margin-bottom:0">Set Preview <span id="sb-slot-badge" style="font-size:10px;color:var(--overlay0);text-transform:none;letter-spacing:0;margin-left:6px">0 / 8 frogs</span></div>
+            <div class="view-toggle" style="margin-left:auto">
+              <button class="view-toggle-btn active" data-mode="card" onclick="setViewMode('card')">⊞ Card</button>
+              <button class="view-toggle-btn"        data-mode="game" onclick="setViewMode('game')">🎮 Game</button>
+            </div>
+          </div>
           <div class="sb-empty-msg" id="sb-empty-msg">Add frogs to start building your set.</div>
           <div class="set-card" id="sb-set-card" style="display:none">
             <div class="set-card-hdr">
@@ -507,6 +544,10 @@
         <option value="oldest">Oldest first</option>
       </select>
       <span class="count-lbl" id="sets-count"></span>
+      <div class="view-toggle">
+        <button class="view-toggle-btn active" data-mode="card" onclick="setViewMode('card')">⊞ Card</button>
+        <button class="view-toggle-btn"        data-mode="game" onclick="setViewMode('game')">🎮 Game</button>
+      </div>
     </div>
     <div id="sets-status" class="status-loading">Fetching sets…</div>
     <div class="sets-grid" id="sets-grid"></div>
@@ -1146,7 +1187,18 @@ function renderSpeciesGrid() {
 
 let allSets = null;
 let setsCanvasObserver = null;
+let setsViewMode = 'card';
 const setsCanvasData = new WeakMap(); // canvas -> [colorId, patternId, genusId]
+
+function setViewMode(mode) {
+  setsViewMode = mode;
+  document.querySelectorAll('.view-toggle-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  // re-render wherever applicable
+  if (allSets) filterSets(document.getElementById('sets-search').value);
+  if (typeof sbFrogs !== 'undefined') renderSbPreview();
+}
 
 function getSetsObserver() {
   if (!setsCanvasObserver) {
@@ -1267,11 +1319,12 @@ function renderSetsGrid(sets) {
   if (!sets.length) return;
   const obs = getSetsObserver();
 
+  const builder = setsViewMode === 'game' ? buildGameStrip : buildSetCard;
   let i = 0;
   function insertBatch() {
     const frag = document.createDocumentFragment();
     const end = Math.min(i + 20, sets.length);
-    for (; i < end; i++) frag.appendChild(buildSetCard(sets[i], obs));
+    for (; i < end; i++) frag.appendChild(builder(sets[i], obs));
     grid.appendChild(frag);
     if (i < sets.length) requestAnimationFrame(insertBatch);
   }
@@ -1342,6 +1395,66 @@ function buildSetCard(set, obs) {
 
   card.appendChild(frogsRow);
   return card;
+}
+
+function buildGameStrip(set, obs) {
+  const strip = document.createElement('div');
+  strip.className = 'set-game-strip';
+
+  const frogsRow = document.createElement('div');
+  frogsRow.className = 'set-game-frogs';
+
+  set.frogs.forEach(([count, colorId, patternId, genusId]) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'set-game-frog-wrap';
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 88; canvas.height = 88;
+    canvas.className = 'frog-thumb';
+    canvas.title = frogFullName(colorId, patternId, genusId) + ' — click to build';
+    canvas.style.cursor = 'pointer';
+    canvas.onclick = () => {
+      document.getElementById('b-color').value   = colorId;
+      document.getElementById('b-pattern').value = patternId;
+      document.getElementById('b-genus').value   = genusId;
+      tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
+      builderUpdate();
+    };
+
+    if (obs) {
+      setsCanvasData.set(canvas, [colorId, patternId, genusId]);
+      _drawFrogPlaceholder(canvas);
+      obs.observe(canvas);
+    } else {
+      renderFrog(canvas, colorId, patternId, genusId);
+    }
+    wrap.appendChild(canvas);
+
+    if (count > 1) {
+      const countEl = document.createElement('div');
+      countEl.className = 'set-game-frog-count';
+      countEl.textContent = '\u00d7' + count;
+      wrap.appendChild(countEl);
+    }
+    frogsRow.appendChild(wrap);
+  });
+
+  strip.appendChild(frogsRow);
+
+  const labelDiv = document.createElement('div');
+  labelDiv.className = 'set-game-label';
+  const nameEl = document.createElement('div');
+  nameEl.className = 'set-game-name';
+  nameEl.textContent = set.name || set.setName || 'Custom Set';
+  labelDiv.appendChild(nameEl);
+  if (set.code) {
+    const weekEl = document.createElement('div');
+    weekEl.className = 'set-game-week';
+    weekEl.textContent = parseWeekCode(set.code);
+    labelDiv.appendChild(weekEl);
+  }
+  strip.appendChild(labelDiv);
+  return strip;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1463,42 +1576,69 @@ function renderSbPreview() {
 
   const frogsRow = document.getElementById('sb-frogs-row');
   frogsRow.innerHTML = '';
-  sbFrogs.forEach(({ colorId, patternId, genusId, count }, idx) => {
-    const tile = document.createElement('div');
-    tile.className = 'set-frog-tile';
-    tile.style.position = 'relative';
 
-    const wrap = document.createElement('div');
-    wrap.className = 'set-frog-wrap';
+  if (setsViewMode === 'game') {
+    // Render as a game-style strip inside the card
+    const pseudoSet = {
+      name: setName,
+      frogs: sbFrogs.map(f => [f.count, f.colorId, f.patternId, f.genusId])
+    };
+    // Replace the entire card temporarily with a game strip
+    card.style.background = 'none';
+    card.style.border = 'none';
+    card.style.padding = '0';
+    const existingStrip = card.querySelector('.set-game-strip');
+    if (existingStrip) existingStrip.remove();
+    // hide the hdr
+    card.querySelector('.set-card-hdr').style.display = 'none';
+    const strip = buildGameStrip(pseudoSet, null);
+    card.appendChild(strip);
+  } else {
+    // restore card styles in case we were in game mode before
+    card.style.background = '';
+    card.style.border = '';
+    card.style.padding = '';
+    const existingStrip = card.querySelector('.set-game-strip');
+    if (existingStrip) existingStrip.remove();
+    card.querySelector('.set-card-hdr').style.display = '';
 
-    const canvas = document.createElement('canvas');
-    canvas.width = 56; canvas.height = 56;
-    canvas.className = 'frog-thumb';
-    renderFrog(canvas, colorId, patternId, genusId);
-    wrap.appendChild(canvas);
+    sbFrogs.forEach(({ colorId, patternId, genusId, count }, idx) => {
+      const tile = document.createElement('div');
+      tile.className = 'set-frog-tile';
+      tile.style.position = 'relative';
 
-    if (count > 1) {
-      const countEl = document.createElement('div');
-      countEl.className = 'set-frog-count';
-      countEl.textContent = '\u00d7' + count;
-      wrap.appendChild(countEl);
-    }
-    tile.appendChild(wrap);
+      const wrap = document.createElement('div');
+      wrap.className = 'set-frog-wrap';
 
-    const label = document.createElement('div');
-    label.className = 'set-frog-name';
-    label.textContent = frogFullName(colorId, patternId, genusId);
-    tile.appendChild(label);
+      const canvas = document.createElement('canvas');
+      canvas.width = 56; canvas.height = 56;
+      canvas.className = 'frog-thumb';
+      renderFrog(canvas, colorId, patternId, genusId);
+      wrap.appendChild(canvas);
 
-    const removeBtn = document.createElement('button');
-    removeBtn.className = 'sb-remove-btn';
-    removeBtn.title = 'Remove';
-    removeBtn.textContent = '\u00d7';
-    removeBtn.onclick = (e) => { e.stopPropagation(); sbRemoveFrog(idx); };
-    tile.appendChild(removeBtn);
+      if (count > 1) {
+        const countEl = document.createElement('div');
+        countEl.className = 'set-frog-count';
+        countEl.textContent = '\u00d7' + count;
+        wrap.appendChild(countEl);
+      }
+      tile.appendChild(wrap);
 
-    frogsRow.appendChild(tile);
-  });
+      const label = document.createElement('div');
+      label.className = 'set-frog-name';
+      label.textContent = frogFullName(colorId, patternId, genusId);
+      tile.appendChild(label);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'sb-remove-btn';
+      removeBtn.title = 'Remove';
+      removeBtn.textContent = '\u00d7';
+      removeBtn.onclick = (e) => { e.stopPropagation(); sbRemoveFrog(idx); };
+      tile.appendChild(removeBtn);
+
+      frogsRow.appendChild(tile);
+    });
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
