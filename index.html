@@ -1368,43 +1368,38 @@ function buildSetCard(set, obs) {
   frogsRow.className = 'set-frogs';
 
   set.frogs.forEach(([count, colorId, patternId, genusId]) => {
-    const tile = document.createElement('div');
-    tile.className = 'set-frog-tile';
-    tile.style.cursor = 'pointer';
-    tile.title = frogFullName(colorId, patternId, genusId) + ' — click to build';
-    tile.onclick = () => {
-      document.getElementById('b-color').value   = colorId;
-      document.getElementById('b-pattern').value = patternId;
-      document.getElementById('b-genus').value   = genusId;
-      tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
-      builderUpdate();
-    };
+    for (let n = 0; n < count; n++) {
+      const tile = document.createElement('div');
+      tile.className = 'set-frog-tile';
+      tile.style.cursor = 'pointer';
+      tile.title = frogFullName(colorId, patternId, genusId) + ' — click to build';
+      tile.onclick = () => {
+        document.getElementById('b-color').value   = colorId;
+        document.getElementById('b-pattern').value = patternId;
+        document.getElementById('b-genus').value   = genusId;
+        tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
+        builderUpdate();
+      };
 
-    const wrap = document.createElement('div');
-    wrap.className = 'set-frog-wrap';
+      const wrap = document.createElement('div');
+      wrap.className = 'set-frog-wrap';
 
-    const canvas = document.createElement('canvas');
-    canvas.width = 56; canvas.height = 56;
-    canvas.className = 'frog-thumb';
-    setsCanvasData.set(canvas, [colorId, patternId, genusId]);
-    _drawFrogPlaceholder(canvas);
-    obs.observe(canvas);
-    wrap.appendChild(canvas);
+      const canvas = document.createElement('canvas');
+      canvas.width = 56; canvas.height = 56;
+      canvas.className = 'frog-thumb';
+      setsCanvasData.set(canvas, [colorId, patternId, genusId]);
+      _drawFrogPlaceholder(canvas);
+      obs.observe(canvas);
+      wrap.appendChild(canvas);
+      tile.appendChild(wrap);
 
-    if (count > 1) {
-      const countEl = document.createElement('div');
-      countEl.className = 'set-frog-count';
-      countEl.textContent = '\u00d7' + count;
-      wrap.appendChild(countEl);
+      const frogLabel = document.createElement('div');
+      frogLabel.className = 'set-frog-name';
+      frogLabel.textContent = frogFullName(colorId, patternId, genusId);
+      tile.appendChild(frogLabel);
+
+      frogsRow.appendChild(tile);
     }
-    tile.appendChild(wrap);
-
-    const frogLabel = document.createElement('div');
-    frogLabel.className = 'set-frog-name';
-    frogLabel.textContent = frogFullName(colorId, patternId, genusId);
-    tile.appendChild(frogLabel);
-
-    frogsRow.appendChild(tile);
   });
 
   card.appendChild(frogsRow);
@@ -1419,38 +1414,33 @@ function buildGameStrip(set, obs) {
   frogsRow.className = 'set-game-frogs';
 
   set.frogs.forEach(([count, colorId, patternId, genusId]) => {
-    const wrap = document.createElement('div');
-    wrap.className = 'set-game-frog-wrap';
+    for (let n = 0; n < count; n++) {
+      const wrap = document.createElement('div');
+      wrap.className = 'set-game-frog-wrap';
 
-    const canvas = document.createElement('canvas');
-    canvas.width = 88; canvas.height = 88;
-    canvas.className = 'frog-thumb';
-    canvas.title = frogFullName(colorId, patternId, genusId) + ' — click to build';
-    canvas.style.cursor = 'pointer';
-    canvas.onclick = () => {
-      document.getElementById('b-color').value   = colorId;
-      document.getElementById('b-pattern').value = patternId;
-      document.getElementById('b-genus').value   = genusId;
-      tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
-      builderUpdate();
-    };
+      const canvas = document.createElement('canvas');
+      canvas.width = 88; canvas.height = 88;
+      canvas.className = 'frog-thumb';
+      canvas.title = frogFullName(colorId, patternId, genusId) + ' — click to build';
+      canvas.style.cursor = 'pointer';
+      canvas.onclick = () => {
+        document.getElementById('b-color').value   = colorId;
+        document.getElementById('b-pattern').value = patternId;
+        document.getElementById('b-genus').value   = genusId;
+        tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
+        builderUpdate();
+      };
 
-    if (obs) {
-      setsCanvasData.set(canvas, [colorId, patternId, genusId]);
-      _drawFrogPlaceholder(canvas);
-      obs.observe(canvas);
-    } else {
-      renderFrog(canvas, colorId, patternId, genusId);
+      if (obs) {
+        setsCanvasData.set(canvas, [colorId, patternId, genusId]);
+        _drawFrogPlaceholder(canvas);
+        obs.observe(canvas);
+      } else {
+        renderFrog(canvas, colorId, patternId, genusId);
+      }
+      wrap.appendChild(canvas);
+      frogsRow.appendChild(wrap);
     }
-    wrap.appendChild(canvas);
-
-    if (count > 1) {
-      const countEl = document.createElement('div');
-      countEl.className = 'set-game-frog-count';
-      countEl.textContent = '\u00d7' + count;
-      wrap.appendChild(countEl);
-    }
-    frogsRow.appendChild(wrap);
   });
 
   strip.appendChild(frogsRow);
