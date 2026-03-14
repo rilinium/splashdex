@@ -241,6 +241,7 @@
     .sb-count-row { display: flex; align-items: center; gap: 10px; }
     .sb-count-display { font-size: 16px; font-weight: 700; color: var(--text); min-width: 28px; text-align: center; }
     .sb-empty-msg { color: var(--overlay0); font-size: 13px; font-style: italic; padding: 20px 0; }
+    .sb-import-row { margin-top: 4px; }
     .sb-remove-btn {
       position: absolute; top: 2px; right: 2px;
       width: 16px; height: 16px; border-radius: 50%;
@@ -308,7 +309,7 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.3</div>
+<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.4</div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
@@ -460,7 +461,7 @@
 
         <!-- Right: live set preview -->
         <div class="setbuilder-preview">
-          <div class="form-label" style="margin-bottom:10px">Set Preview</div>
+          <div class="form-label" style="margin-bottom:10px">Set Preview <span id="sb-slot-badge" style="font-size:10px;color:var(--overlay0);text-transform:none;letter-spacing:0;margin-left:6px">0 / 8 frogs</span></div>
           <div class="sb-empty-msg" id="sb-empty-msg">Add frogs to start building your set.</div>
           <div class="set-card" id="sb-set-card" style="display:none">
             <div class="set-card-hdr">
@@ -475,6 +476,19 @@
         </div>
 
       </div>
+
+      <!-- Import -->
+      <div class="setbuilder-divider"></div>
+      <div class="sb-import-row">
+        <div class="form-label" style="margin-bottom:6px">Import Set Data</div>
+        <p style="font-size:11px;color:var(--overlay1);margin-bottom:8px">Paste exported set data from Pocket Frogs (e.g. <code style="background:var(--surface0);padding:1px 5px;border-radius:3px">1:2:7:16,1:1:10:16,…</code>). Overwrites current set.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
+          <textarea class="form-input sb-import-area" id="sb-import-text" rows="3" placeholder="1:2:7:16,1:1:10:16,…" style="flex:1;min-width:200px;font-family:monospace;font-size:12px;resize:vertical"></textarea>
+          <button class="btn btn-primary btn-sm" style="align-self:flex-end" onclick="sbImport()">Import</button>
+        </div>
+        <div id="sb-import-error" style="display:none;font-size:11px;color:var(--red);margin-top:6px"></div>
+      </div>
+
     </div>
   </div>
 
@@ -1380,6 +1394,7 @@ function sbCountAdj(delta) {
 }
 
 function sbAddFrog() {
+  if (sbFrogs.length >= 8) return;
   const colorId   = parseInt(document.getElementById('sb-color').value);
   const patternId = parseInt(document.getElementById('sb-pattern').value);
   const genusId   = parseInt(document.getElementById('sb-genus').value);
@@ -1397,15 +1412,44 @@ function sbClear() {
   renderSbPreview();
 }
 
+function sbImport() {
+  const raw = document.getElementById('sb-import-text').value.trim();
+  const errEl = document.getElementById('sb-import-error');
+  errEl.style.display = 'none';
+
+  if (!raw) { errEl.textContent = 'Paste set data first.'; errEl.style.display = ''; return; }
+
+  const parsed = [];
+  const parts = raw.split(',');
+  for (const part of parts) {
+    const segs = part.trim().split(':');
+    if (segs.length !== 4) { errEl.textContent = 'Invalid format — expected count:colorId:patternId:genusId per frog.'; errEl.style.display = ''; return; }
+    const [count, colorId, patternId, genusId] = segs.map(Number);
+    if ([count, colorId, patternId, genusId].some(isNaN)) { errEl.textContent = 'Non-numeric value in: ' + part.trim(); errEl.style.display = ''; return; }
+    if (!COLORS[colorId])   { errEl.textContent = 'Unknown colorId ' + colorId + ' in: ' + part.trim(); errEl.style.display = ''; return; }
+    if (!PATTERNS[patternId] && patternId !== 15) { errEl.textContent = 'Unknown patternId ' + patternId + ' in: ' + part.trim(); errEl.style.display = ''; return; }
+    if (GENERA[genusId] === undefined) { errEl.textContent = 'Unknown genusId ' + genusId + ' in: ' + part.trim(); errEl.style.display = ''; return; }
+    parsed.push({ colorId, patternId, genusId, count: Math.max(1, count) });
+  }
+
+  if (parsed.length > 8) { errEl.textContent = 'Sets are capped at 8 frogs — imported first 8.'; errEl.style.display = ''; }
+  sbFrogs = parsed.slice(0, 8);
+  document.getElementById('sb-import-text').value = '';
+  renderSbPreview();
+}
+
 function renderSbPreview() {
   const setName  = document.getElementById('sb-set-name').value.trim() || 'My Custom Set';
   const card     = document.getElementById('sb-set-card');
   const emptyMsg = document.getElementById('sb-empty-msg');
   const clearBtn = document.getElementById('sb-clear-btn');
+  const addBtn   = document.querySelector('[onclick="sbAddFrog()"]');
 
   document.getElementById('sb-preview-name').textContent = setName;
   const totalFrogs = sbFrogs.reduce((s,f) => s + f.count, 0);
   document.getElementById('sb-frog-badge').textContent = totalFrogs + (totalFrogs === 1 ? ' frog' : ' frogs');
+  document.getElementById('sb-slot-badge').textContent = sbFrogs.length + ' / 8 frogs';
+  if (addBtn) { addBtn.disabled = sbFrogs.length >= 8; addBtn.style.opacity = sbFrogs.length >= 8 ? '0.4' : ''; }
 
   if (!sbFrogs.length) {
     card.style.display = 'none';
