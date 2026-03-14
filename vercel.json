@@ -7,9 +7,13 @@
     },
     "api/page.js": {
       "includeFiles": "index.html,sets.txt"
+    },
+    "api/stats.js": {
+      "includeFiles": "sets.txt"
     }
   },
   "routes": [
+    { "src": "^/stats$", "dest": "/api/stats" },
     { "src": "^/(frog|breeds|set|customset)$", "dest": "/api/page" },
     { "src": "^/$", "dest": "/api/page" },
     { "handle": "filesystem" }
