@@ -15,7 +15,6 @@
 - Pattern 15 (`Chroma`) is special: it doesn’t just tint the genus mask with a fixed color; it updates every frame. `chromaCanvases` holds the canvas context plus the exposed RGB values and whether the current frog is glass, and `animateChroma` runs on `requestAnimationFrame` to sweep `chromaHue` through the HSV spectrum. That loop is also why `renderFrog` has to register the canvas in the map rather than drawing a single frame, the animation keeps running until the frog disappears from the DOM.
 
 ## Builder and browser behavior notes
-- The builder now randomizes immediately after populating the body/pattern/genus selects, so the first thing you see is a new combo rather than the first entries in each select. That felt important for staying true to the “build a frog” spirit instead of defaulting to the first row.
 - Species cards and weekly set tiles render lazily: each canvas starts with `_drawFrogPlaceholder`, and an `IntersectionObserver` paints the frog only when it scrolls into view (and clears it when it leaves). This keeps the browsers from decoding 120 canvas images upfront while the user is still scanning filters.
 - Sets data is fetched from two sources (local `sets.txt` first, then `https://www.nimblebit.com/sets.txt` if needed), and the status element shows a friendly error when both fail. That double-fetch strategy came from noticing the GitHub Action snapshot already ships with a cached copy.
 
