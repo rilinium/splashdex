@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Splashdex — Pocket Frogs</title>
+  <style>
+    /* ── Catppuccin Mocha ── */
+    :root {
+      --base:      #1e1e2e;
+      --mantle:    #181825;
+      --crust:     #11111b;
+      --surface0:  #313244;
+      --surface1:  #45475a;
+      --surface2:  #585b70;
+      --overlay0:  #6c7086;
+      --overlay1:  #7f849c;
+      --subtext0:  #a6adc8;
+      --subtext1:  #bac2de;
+      --text:      #cdd6f4;
+      --lavender:  #b4befe;
+      --blue:      #89b4fa;
+      --sapphire:  #74c7ec;
+      --teal:      #94e2d5;
+      --green:     #a6e3a1;
+      --yellow:    #f9e2af;
+      --peach:     #fab387;
+      --red:       #f38ba8;
+      --mauve:     #cba6f7;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--base);
+      color: var(--text);
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    .hdr {
+      background: var(--mantle);
+      border-bottom: 1px solid var(--surface0);
+      padding: 12px 20px;
+      display: flex; align-items: center; gap: 12px;
+      flex-shrink: 0;
+    }
+    .hdr-logo { height: 28px; width: auto; }
+    .hdr-sub { font-size: 11px; color: var(--subtext0); }
+    .hdr-right { margin-left: auto; font-size: 11px; color: var(--overlay1); text-align: right; }
+
+    /* ── Tabs ── */
+    .tabs {
+      background: var(--mantle);
+      border-bottom: 1px solid var(--surface0);
+      padding: 0 20px; display: flex; gap: 0;
+      flex-shrink: 0;
+    }
+    .tab-btn {
+      padding: 10px 20px; border: none; background: none;
+      color: var(--subtext0); cursor: pointer;
+      font-size: 13px; font-weight: 500;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: color .15s, border-color .15s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--mauve); border-bottom-color: var(--mauve); }
+
+    /* ── Content ── */
+    .content { flex: 1; overflow: auto; }
+    .tab-panel { display: none; padding: 20px; max-width: 1100px; }
+    .tab-panel.active { display: block; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--mantle);
+      border: 1px solid var(--surface0);
+      border-radius: 8px; padding: 16px 18px; margin-bottom: 14px;
+    }
+    .card-title {
+      font-size: 11px; font-weight: 600; color: var(--subtext0);
+      text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 7px 16px; border-radius: 6px; cursor: pointer; border: none;
+      font-size: 13px; font-weight: 500;
+      transition: opacity .1s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn:active { opacity: .7; }
+    .btn-primary { background: var(--green); color: var(--crust); }
+    .btn-gold    { background: var(--yellow); color: var(--crust); }
+    .btn-sm      { padding: 5px 12px; font-size: 12px; }
+
+    /* ── Form inputs ── */
+    .form-input {
+      background: var(--surface0); border: 1px solid var(--surface1);
+      border-radius: 6px; color: var(--text); padding: 7px 10px;
+      font-size: 13px; width: 100%;
+    }
+    .form-input:focus { outline: none; border-color: var(--mauve); }
+    select.form-input { cursor: pointer; }
+    select.form-input option { background: var(--surface0); color: var(--text); }
+
+    /* ── Builder ── */
+    .builder-layout { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+    .builder-preview {
+      flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .preview-canvas-wrap {
+      width: 192px; height: 192px;
+      background: var(--surface0);
+      border: 1px solid var(--surface1);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #builder-canvas { image-rendering: pixelated; }
+    .frog-name-display {
+      font-size: 14px; font-weight: 600; color: var(--text); text-align: center; min-height: 20px;
+    }
+    .frog-combo-display { font-size: 11px; color: var(--subtext0); text-align: center; }
+    .builder-controls { flex: 1; min-width: 240px; }
+    .form-group { margin-bottom: 12px; }
+    .form-label {
+      display: block; font-size: 11px; font-weight: 600; color: var(--subtext0);
+      text-transform: uppercase; letter-spacing: .07em; margin-bottom: 5px;
+    }
+    .color-preview-row { display: flex; align-items: center; gap: 8px; }
+    .color-dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--surface2); flex-shrink: 0; }
+    .btn-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+    .dex-id-display {
+      font-size: 11px; color: var(--subtext0);
+      background: var(--surface0); border: 1px solid var(--surface1);
+      border-radius: 6px; padding: 6px 10px; margin-top: 10px;
+    }
+    .dex-id-display strong { color: var(--text); }
+
+    /* ── Species grid ── */
+    .species-toolbar {
+      display: flex; gap: 8px; align-items: center;
+      margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .search-input {
+      background: var(--surface0); border: 1px solid var(--surface1);
+      border-radius: 6px; color: var(--text); padding: 7px 12px;
+      font-size: 13px; min-width: 200px; flex: 1;
+    }
+    .search-input:focus { outline: none; border-color: var(--mauve); }
+    .search-input::placeholder { color: var(--overlay0); }
+    .filter-select {
+      background: var(--surface0); border: 1px solid var(--surface1);
+      border-radius: 6px; color: var(--text); padding: 7px 10px;
+      font-size: 12px; cursor: pointer;
+    }
+    .filter-select option { background: var(--surface0); }
+    .count-lbl { font-size: 12px; color: var(--overlay1); white-space: nowrap; }
+    .species-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
+    }
+    .species-card {
+      background: var(--mantle); border: 1px solid var(--surface0);
+      border-radius: 8px; padding: 10px 8px;
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      cursor: pointer; transition: border-color .15s;
+    }
+    .species-card:hover { border-color: var(--mauve); }
+    .species-canvas { image-rendering: pixelated; }
+    .species-name { font-size: 11px; font-weight: 500; color: var(--text); text-align: center; line-height: 1.3; }
+    .species-id { font-size: 10px; color: var(--overlay0); }
+    .species-genus-badge {
+      font-size: 10px; color: var(--sapphire);
+      background: color-mix(in srgb, var(--sapphire) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--sapphire) 25%, transparent);
+      border-radius: 4px; padding: 1px 5px;
+    }
+
+    /* ── Sets ── */
+    .sets-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+    .sets-grid { display: flex; flex-direction: column; gap: 10px; }
+    .set-card { background: var(--mantle); border: 1px solid var(--surface0); border-radius: 8px; padding: 14px 16px; }
+    .set-card-hdr { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .set-card-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .set-card-week {
+      font-size: 11px; color: var(--subtext0);
+      background: var(--surface0); border: 1px solid var(--surface1);
+      border-radius: 4px; padding: 2px 7px;
+    }
+    .set-frogs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .set-frog-tile {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      background: var(--surface0); border: 1px solid var(--surface1);
+      border-radius: 6px; padding: 8px 6px; min-width: 68px; cursor: pointer;
+      transition: border-color .15s;
+    }
+    .set-frog-tile:hover { border-color: var(--mauve); }
+    .set-frog-name { font-size: 10px; color: var(--subtext0); text-align: center; line-height: 1.3; }
+    .set-frog-count { font-size: 10px; font-weight: 700; color: var(--yellow); position: absolute; top: 4px; right: 4px; }
+    .set-frog-wrap { position: relative; }
+    .status-loading { color: var(--subtext0); font-size: 13px; padding: 20px 0; }
+    .status-error {
+      color: var(--red); font-size: 13px; padding: 16px;
+      background: color-mix(in srgb, var(--red) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--red) 25%, transparent);
+      border-radius: 6px;
+    }
+    .sets-note {
+      font-size: 11px; color: var(--subtext0);
+      margin-bottom: 12px; padding: 8px 12px;
+      background: var(--surface0); border-radius: 6px;
+      border-left: 2px solid var(--mauve);
+    }
+    .frog-thumb { image-rendering: pixelated; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--surface2); }
+  </style>
+</head>
+<body>
+
+<header class="hdr">
+  <img src="Splashdex.svg" alt="Splashdex" class="hdr-logo">
+  <div class="hdr-sub">Pocket Frogs — Frog Reference &amp; Builder</div>
+  <div class="hdr-right">
+    23 colors · 16 patterns · 120 genera<br>
+    44,160 total combinations
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
+  <button class="tab-btn"        onclick="tab('species', this)">📖 Named Species</button>
+  <button class="tab-btn"        onclick="tab('sets', this)">📅 Weekly Sets</button>
+</nav>
+
+<div class="content">
+
+  <!-- ── Frog Builder ── -->
+  <div class="tab-panel active" id="tab-builder">
+    <div class="card">
+      <div class="card-title">Build a Frog</div>
+      <div class="builder-layout">
+
+        <div class="builder-preview">
+          <div class="preview-canvas-wrap">
+            <canvas id="builder-canvas" width="192" height="192"></canvas>
+          </div>
+          <div class="frog-name-display" id="builder-name">—</div>
+          <div class="frog-combo-display" id="builder-combo"></div>
+          <div class="dex-id-display" id="builder-dexid"></div>
+        </div>
+
+        <div class="builder-controls">
+          <div class="form-group">
+            <label class="form-label" for="b-color">Body Color</label>
+            <div class="color-preview-row">
+              <div class="color-dot" id="b-color-dot"></div>
+              <select class="form-input" id="b-color" onchange="builderUpdate()"></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="b-pattern">Pattern</label>
+            <div class="color-preview-row">
+              <div class="color-dot" id="b-pattern-dot"></div>
+              <select class="form-input" id="b-pattern" onchange="builderUpdate()"></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="b-genus">Genus</label>
+            <select class="form-input" id="b-genus" onchange="builderUpdate()"></select>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="builderRandomize()">🎲 Randomize</button>
+            <button class="btn btn-gold btn-sm" onclick="builderGoToSpecies()">View in Species</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">How Frog Rendering Works</div>
+      <p style="color:var(--cream-dim);font-size:12px;line-height:1.7">
+        Each frog is composited from three layers:<br>
+        <strong style="color:var(--cream)">1. Base layer</strong> — a grayscale frog silhouette, tinted with the body color.<br>
+        <strong style="color:var(--cream)">2. Genus layer</strong> — genus-specific markings (spots, stripes, etc.), tinted with the pattern color.<br>
+        <strong style="color:var(--cream)">3. Overlay</strong> — a shading mask applied with a hard-light blend to add depth and restore eye whites.<br>
+        Special: <em>Chroma</em> pattern animates through the full RGB spectrum. <em>Glass</em> color makes the frog semi-transparent.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Named Species ── -->
+  <div class="tab-panel" id="tab-species">
+    <div class="species-toolbar">
+      <input class="search-input" type="search" id="species-search"
+             placeholder="Search species, color, genus…"
+             oninput="filterSpecies(this.value)">
+      <select class="filter-select" id="species-color-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
+        <option value="">All Colors</option>
+      </select>
+      <select class="filter-select" id="species-genus-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
+        <option value="">All Genera</option>
+      </select>
+      <span class="count-lbl" id="species-count"></span>
+    </div>
+    <div class="species-grid" id="species-grid"></div>
+  </div>
+
+  <!-- ── Weekly Sets ── -->
+  <div class="tab-panel" id="tab-sets">
+    <div class="sets-note">
+      Sets data is fetched live from <strong>nimblebit.com/sets.txt</strong>.
+      The most recent set is shown first.
+    </div>
+    <div class="sets-toolbar">
+      <input class="search-input" type="search" id="sets-search"
+             placeholder="Search set names or frog species…"
+             oninput="filterSets(this.value)">
+      <span class="count-lbl" id="sets-count"></span>
+    </div>
+    <div id="sets-status" class="status-loading">Fetching sets…</div>
+    <div class="sets-grid" id="sets-grid"></div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// Game Data
+// ══════════════════════════════════════════════════════════════════════════════
+
+const COLORS = {
+   0: ["Green",    129, 218,   0],
+   1: ["Cocos",    117,  63,   0],
+   2: ["Beige",    166, 142,  80],
+   3: ["Orange",   255, 168,   0],
+   4: ["Red",      255,   0,   0],
+   5: ["Lime",     210, 255,   0],
+   6: ["Azure",      0, 192, 255],
+   7: ["Violet",   255,   0, 109],
+   8: ["Emerald",    0, 226,  16],
+   9: ["Tangelo",  255, 108,   0],
+  10: ["Yellow",   255, 255,   0],
+  11: ["Aqua",      29, 255, 251],
+  12: ["Purple",    95,   0, 197],
+  13: ["Golden",   246, 197,   0],
+  14: ["Royal",    174,   0, 205],
+  15: ["Blue",       0,  90, 255],
+  16: ["Pink",     255,   0, 255],
+  17: ["Black",     40,  40,  40],
+  18: ["Maroon",   183,   0,   0],
+  19: ["White",    255, 255, 255],
+  20: ["Marine",     0, 209, 128],
+  21: ["Olive",     72, 122,   0],
+  22: ["Glass",    213, 226, 226],
+};
+
+const PATTERNS = {
+   0: "Callaina",  1: "Picea",    2: "Caelus",  3: "Albeo",
+   4: "Carota",    5: "Aurum",    6: "Folium",  7: "Bruna",
+   8: "Pruni",     9: "Muscus",  10: "Ceres",  11: "Tingo",
+  12: "Floris",   13: "Viola",   14: "Cafea",  15: "Chroma",
+};
+
+const PATTERN_COLORS = {
+   0: ["Callaina",  13, 229, 255],
+   1: ["Picea",     30,  20,  10],
+   2: ["Caelus",     0, 138, 255],
+   3: ["Albeo",    235, 235, 235],
+   4: ["Carota",   255,  78,   0],
+   5: ["Aurum",    255, 228,   0],
+   6: ["Folium",   150, 255,   0],
+   7: ["Bruna",     88,  56,  15],
+   8: ["Pruni",     75,  15,  70],
+   9: ["Muscus",    67, 255,   0],
+  10: ["Ceres",    241, 192, 171],
+  11: ["Tingo",    159,   0,   0],
+  12: ["Floris",   255,   3, 157],
+  13: ["Viola",    174,   0, 255],
+  14: ["Cafea",     60,  38,   9],
+  15: ["Chroma",    30,  20,  10],
+};
+
+const GENERA = {
+    0:"Anura",      1:"Partiri",    2:"Crustalli",  3:"Velatus",
+    4:"Clunicula",  5:"Marmorea",   6:"Mixtus",     7:"Nasus",
+    8:"Stellata",   9:"Puncti",    10:"Zebrae",    11:"Calyx",
+   12:"Nimbilis",  13:"Roboris",   14:"Adamantis", 15:"Africanus",
+   16:"Serpentis", 17:"Bovis",     18:"Viduo",     19:"Spinae",
+   20:"Cesti",     21:"Sagitta",   22:"Amfractus", 23:"Ornatus",
+   24:"Sol",       25:"Lucus",     26:"Ligo",      27:"Corona",
+   28:"Arbor",     29:"Ocularis",  30:"Insero",    31:"Biplex",
+   32:"Pingo",     33:"Calvaria",  34:"Floresco",  35:"Magus",
+   36:"Veru",      37:"Tribus",    38:"Lanterna",  39:"Glacio",
+   40:"Ludo",      41:"Marinus",   42:"Dextera",   43:"Trivium",
+   44:"Obaro",     45:"Bulla",     46:"Orbis",     47:"Vinaceus",
+   48:"Persona",   49:"Signum",    50:"Gyrus",     51:"Geminus",
+   52:"Bulbus",    53:"Templum",   54:"Papilio",   55:"Pluma",
+   56:"Cornus",    57:"Volta",     58:"Flecto",    59:"Figularis",
+   60:"Aceris",    61:"Lunaris",   62:"Tabula",    63:"Pictoris",
+   64:"Shelbus",   65:"Skeletos",  66:"Pyramis",   67:"Lotus",
+   68:"Spira",     69:"Planeta",   70:"Mazeus",    71:"Palma",
+   72:"Coclearis", 73:"Mustacium", 74:"Axis",      75:"Igneous",
+   76:"Infinitas", 77:"Nodare",    78:"Dimidius",  79:"Scutulata",
+   80:"Arcus",     81:"Botulus",   82:"Americano", 83:"Symphonia",
+   84:"Vicis",     85:"Janus",     86:"Levar",     87:"Gemma",
+   88:"Favus",     89:"Tessera",   90:"Frondis",   91:"Pistrix",
+   92:"Nebula",    93:"Fractus",   94:"Hennae",    95:"Pulvillus",
+   96:"Quilta",    97:"Foramen",   98:"Emblema",   99:"Fortuno",
+  100:"Splendico",101:"Hexas",    102:"Spargo",   103:"Latus",
+  104:"Lentium",  105:"Altilium", 106:"Procursus",107:"Stillas",
+  108:"Inverso",  109:"Exclamo",  110:"Imbris",   111:"Pompeius",
+  112:"Conexus",  113:"Cerebrum", 114:"Garcius",  115:"Porto",
+  116:"Florens",  117:"Topologia",118:"Losgann",  119:"Triquetra",
+};
+
+// FROG_TYPES: typeId → [colorId, genusId, patternId, name]
+// (Note: index order is color, GENUS, pattern — different from d[] in save data)
+const FROG_TYPES = {
+    0:[0,0,6,"Green Anura"],              1:[1,0,7,"Cocos Anura"],
+    2:[2,0,10,"Beige Anura"],             3:[3,0,4,"Orange Anura"],
+    4:[4,0,11,"Red Anura"],               5:[12,0,13,"Purple Anura"],
+    6:[13,0,5,"Golden Anura"],            7:[17,0,1,"Black Anura"],
+    8:[19,0,3,"White Anura"],             9:[6,2,1,"Azure Picea Crustalli"],
+   10:[4,2,11,"Red Tingo Crustalli"],    11:[0,2,6,"Green Folium Crustalli"],
+   12:[3,2,5,"Orange Aurum Crustalli"],  13:[16,2,1,"Pink Picea Crustalli"],
+   14:[7,3,1,"Violet Picea Velatus"],    15:[8,3,1,"Emerald Picea Velatus"],
+   16:[2,3,14,"Beige Cafea Velatus"],    17:[21,3,7,"Olive Bruna Velatus"],
+   18:[20,3,1,"Marine Picea Velatus"],   19:[13,3,3,"Golden Albeo Velatus"],
+   20:[4,3,8,"Red Pruni Velatus"],       21:[5,4,0,"Lime Callaina Clunicula"],
+   22:[9,4,2,"Tangelo Caelus Clunicula"],23:[14,4,8,"Royal Pruni Clunicula"],
+   24:[3,4,4,"Orange Carota Clunicula"], 25:[2,4,7,"Beige Bruna Clunicula"],
+   26:[17,4,6,"Black Folium Clunicula"], 27:[4,5,3,"Red Albeo Marmorea"],
+   28:[0,5,8,"Green Pruni Marmorea"],    29:[20,5,6,"Marine Folium Marmorea"],
+   30:[1,5,10,"Cocos Ceres Marmorea"],   31:[13,5,1,"Golden Picea Marmorea"],
+   32:[17,5,1,"Black Picea Marmorea"],   33:[3,9,7,"Orange Bruna Puncti"],
+   34:[14,9,8,"Royal Pruni Puncti"],     35:[17,9,9,"Black Muscus Puncti"],
+   36:[18,9,10,"Maroon Ceres Puncti"],   37:[21,9,14,"Olive Cafea Puncti"],
+   38:[8,10,1,"Emerald Picea Zebrae"],   39:[19,10,1,"White Picea Zebrae"],
+   40:[17,10,4,"Black Carota Zebrae"],   41:[3,10,11,"Orange Tingo Zebrae"],
+   42:[2,10,7,"Beige Bruna Zebrae"],     43:[0,14,6,"Green Folium Adamantis"],
+   44:[1,14,5,"Cocos Aurum Adamantis"],  45:[4,14,3,"Red Albeo Adamantis"],
+   46:[6,14,1,"Azure Picea Adamantis"],  47:[17,14,9,"Black Muscus Adamantis"],
+   48:[9,14,13,"Tangelo Viola Adamantis"],49:[3,15,7,"Orange Bruna Africanus"],
+   50:[18,15,4,"Maroon Carota Africanus"],51:[6,15,0,"Azure Callaina Africanus"],
+   52:[17,15,1,"Black Picea Africanus"], 53:[0,15,6,"Green Folium Africanus"],
+   54:[4,1,1,"Red Picea Partiri"],       55:[15,1,1,"Blue Picea Partiri"],
+   56:[3,1,1,"Orange Picea Partiri"],    57:[5,1,1,"Lime Picea Partiri"],
+   58:[16,1,1,"Pink Picea Partiri"],     59:[5,1,9,"Lime Muscus Partiri"],
+   60:[12,1,13,"Purple Viola Partiri"],  61:[6,1,2,"Azure Caelus Partiri"],
+   62:[19,1,4,"White Carota Partiri"],   63:[1,1,7,"Cocos Bruna Partiri"],
+   64:[11,7,4,"Aqua Carota Nasus"],      65:[7,7,8,"Violet Pruni Nasus"],
+   66:[0,7,13,"Green Viola Nasus"],      67:[2,7,14,"Beige Cafea Nasus"],
+   68:[15,7,1,"Blue Picea Nasus"],       69:[13,7,2,"Golden Caelus Nasus"],
+   70:[12,13,12,"Purple Floris Roboris"],71:[20,13,6,"Marine Folium Roboris"],
+   72:[13,13,3,"Golden Albeo Roboris"],  73:[19,13,11,"White Tingo Roboris"],
+   74:[1,13,6,"Cocos Folium Roboris"],   75:[18,17,4,"Maroon Carota Bovis"],
+   76:[8,17,7,"Emerald Bruna Bovis"],    77:[19,17,1,"White Picea Bovis"],
+   78:[16,17,3,"Pink Albeo Bovis"],      79:[21,17,14,"Olive Cafea Bovis"],
+   80:[10,6,2,"Yellow Caelus Mixtus"],   81:[7,6,13,"Violet Viola Mixtus"],
+   82:[8,6,4,"Emerald Carota Mixtus"],   83:[20,6,2,"Marine Caelus Mixtus"],
+   84:[3,6,1,"Orange Picea Mixtus"],     85:[4,6,3,"Red Albeo Mixtus"],
+   86:[6,11,4,"Azure Carota Calyx"],     87:[4,11,5,"Red Aurum Calyx"],
+   88:[2,11,6,"Beige Folium Calyx"],     89:[12,11,12,"Purple Floris Calyx"],
+   90:[5,11,0,"Lime Callaina Calyx"],    91:[17,18,11,"Black Tingo Viduo"],
+   92:[1,18,5,"Cocos Aurum Viduo"],      93:[7,18,8,"Violet Pruni Viduo"],
+   94:[13,18,3,"Golden Albeo Viduo"],    95:[8,18,0,"Emerald Callaina Viduo"],
+   96:[14,8,5,"Royal Aurum Stellata"],   97:[13,8,3,"Golden Albeo Stellata"],
+   98:[0,8,6,"Green Folium Stellata"],   99:[19,8,0,"White Callaina Stellata"],
+  100:[21,8,3,"Olive Albeo Stellata"],  101:[17,8,12,"Black Floris Stellata"],
+  102:[0,16,6,"Green Folium Serpentis"],103:[17,16,13,"Black Viola Serpentis"],
+  104:[14,16,1,"Royal Picea Serpentis"],105:[15,16,0,"Blue Callaina Serpentis"],
+  106:[18,16,3,"Maroon Albeo Serpentis"],107:[20,19,3,"Marine Albeo Spinae"],
+  108:[17,19,6,"Black Folium Spinae"],  109:[19,19,2,"White Caelus Spinae"],
+  110:[15,19,5,"Blue Aurum Spinae"],    111:[4,19,8,"Red Pruni Spinae"],
+  112:[17,12,6,"Black Folium Nimbilis"],113:[5,12,1,"Lime Picea Nimbilis"],
+  114:[4,12,4,"Red Carota Nimbilis"],   115:[7,12,3,"Violet Albeo Nimbilis"],
+  116:[13,12,7,"Golden Bruna Nimbilis"],117:[16,20,1,"Pink Picea Cesti"],
+  118:[18,20,5,"Maroon Aurum Cesti"],   119:[17,20,6,"Black Folium Cesti"],
+  120:[5,20,2,"Lime Caelus Cesti"],     121:[19,20,4,"White Carota Cesti"],
+  122:[10,2,8,"Yellow Pruni Crustalli"],123:[10,4,12,"Yellow Floris Clunicula"],
+  124:[10,6,13,"Yellow Viola Mixtus"],  125:[9,6,2,"Tangelo Caelus Mixtus"],
+  126:[9,3,5,"Tangelo Aurum Velatus"],  127:[11,0,0,"Aqua Anura"],
+  128:[11,9,4,"Aqua Carota Puncti"],    129:[11,10,14,"Aqua Cafea Zebrae"],
+  130:[21,5,9,"Olive Muscus Marmorea"], 131:[16,11,10,"Pink Ceres Calyx"],
+  132:[4,21,3,"Red Albeo Sagitta"],     133:[12,22,4,"Purple Carota Amfractus"],
+  134:[20,23,1,"Marine Picea Ornatus"], 135:[18,24,5,"Maroon Aurum Sol"],
+  136:[5,25,2,"Lime Caelus Lucus"],     137:[17,26,12,"Black Floris Ligo"],
+  138:[7,27,0,"Violet Callaina Corona"],139:[1,28,6,"Cocos Folium Arbor"],
+  140:[1,29,6,"Ocularis"],              141:[1,30,6,"Insero"],
+  142:[1,31,6,"Biplex"],                143:[1,32,6,"Pingo"],
+  144:[1,33,6,"Calvaria"],              145:[1,34,6,"Floresco"],
+  146:[1,35,6,"Magus"],                 147:[1,36,6,"Veru"],
+  148:[1,53,6,"Templum"],               149:[1,54,6,"Papilio"],
+  150:[1,55,6,"Pluma"],                 151:[1,56,6,"Cornus"],
+  152:[1,57,6,"Volta"],                 153:[1,58,6,"Flecto"],
+  154:[1,59,6,"Figularis"],             155:[1,60,6,"Aceris"],
+  156:[1,61,6,"Lunaris"],               157:[1,62,6,"Tabula"],
+  158:[1,63,6,"Pictoris"],              159:[1,64,6,"Shelbus"],
+  160:[1,65,6,"Skeletos"],              161:[1,66,6,"Pyramis"],
+  162:[1,67,6,"Lotus"],                 163:[1,68,6,"Spira"],
+  164:[1,69,6,"Planeta"],               165:[1,70,6,"Mazeus"],
+  166:[1,71,6,"Palma"],                 167:[1,72,6,"Coclearis"],
+  168:[1,73,6,"Mustacium"],             169:[1,74,6,"Axis"],
+  170:[1,75,6,"Igneous"],               171:[1,76,6,"Infinitas"],
+  172:[1,77,6,"Nodare"],                173:[1,78,6,"Dimidius"],
+  174:[1,79,6,"Scutulata"],             175:[1,80,6,"Arcus"],
+  176:[1,81,6,"Botulus"],               177:[1,82,6,"Americano"],
+  178:[1,83,6,"Symphonia"],             179:[1,84,6,"Vicis"],
+  180:[1,85,6,"Janus"],                 181:[1,86,6,"Levar"],
+  182:[1,87,6,"Gemma"],                 183:[1,88,6,"Favus"],
+  184:[1,89,6,"Tessera"],               185:[1,90,6,"Pistrix"],
+  186:[1,91,6,"Nebula"],                187:[1,92,6,"Fractus"],
+  188:[1,93,6,"Hennae"],                189:[1,94,6,"Pulvillus"],
+  190:[1,95,6,"Quilta"],                191:[1,96,6,"Foramen"],
+  192:[1,97,6,"Emblema"],               193:[1,98,6,"Fortuno"],
+  194:[1,99,6,"Splendico"],             195:[1,100,6,"Hexas"],
+  196:[1,101,6,"Spargo"],               197:[1,102,6,"Latus"],
+  198:[1,103,6,"Lentium"],              199:[1,104,6,"Altilium"],
+  200:[1,105,6,"Procursus"],            201:[1,106,6,"Stillas"],
+  202:[1,107,6,"Inverso"],              203:[1,108,6,"Exclamo"],
+  204:[1,109,6,"Pompeius"],             205:[1,110,6,"Conexus"],
+  206:[1,111,6,"Cerebrum"],             207:[1,112,6,"Garcius"],
+  208:[1,113,6,"Porto"],                209:[1,114,6,"Florens"],
+  210:[1,115,6,"Topologia"],            211:[1,116,6,"Losgann"],
+};
+
+// Sprite directory — adjust this if you move sprites elsewhere
+const SPRITES = 'frog_sprites/';
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Sprite Rendering Engine (ported from pf_editor_web.py)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const _spriteCache = {};
+
+function loadSprite(name) {
+  if (_spriteCache[name]) return _spriteCache[name];
+  const p = new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('sprite load failed: ' + name));
+    img.src = SPRITES + name;
+  });
+  _spriteCache[name] = p;
+  return p;
+}
+
+function _tintLayer(ctx, img, sx, sy, sw, sh, dx, dy, dw, dh, r, g, b) {
+  const tmp = document.createElement('canvas');
+  tmp.width = dw; tmp.height = dh;
+  const tctx = tmp.getContext('2d');
+  tctx.drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
+  const id = tctx.getImageData(0, 0, dw, dh);
+  const d = id.data;
+  for (let i = 0; i < d.length; i += 4) {
+    d[i]   = d[i]   * r / 255;
+    d[i+1] = d[i+1] * g / 255;
+    d[i+2] = d[i+2] * b / 255;
+  }
+  tctx.putImageData(id, 0, 0);
+  ctx.drawImage(tmp, dx, dy);
+}
+
+function _multiplyOverlay(ctx, img, sx, sy, sw, sh, dx, dy, dw, dh) {
+  const tmp = document.createElement('canvas');
+  tmp.width = dw; tmp.height = dh;
+  tmp.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
+  const ov = tmp.getContext('2d').getImageData(0, 0, dw, dh).data;
+  const cId = ctx.getImageData(dx, dy, dw, dh);
+  const cv = cId.data;
+  for (let i = 0; i < ov.length; i += 4) {
+    const a = ov[i + 3] / 255;
+    if (a > 0) {
+      const v = ov[i] / 255;
+      for (let ch = 0; ch < 3; ch++) {
+        const c = cv[i + ch] / 255;
+        const result = v < 0.5
+          ? 2 * v * c
+          : 1 - 2 * (1 - v) * (1 - c);
+        cv[i + ch] = Math.min(255, Math.round((1 - a) * cv[i + ch] + a * result * 255));
+      }
+    }
+  }
+  ctx.putImageData(cId, dx, dy);
+}
+
+function _applyGlassEffect(ctx, w, h) {
+  const id = ctx.getImageData(0, 0, w, h);
+  const d = id.data;
+  for (let i = 3; i < d.length; i += 4) d[i] = (d[i] * 0.5) | 0;
+  ctx.putImageData(id, 0, 0);
+}
+
+function _drawFrogPlaceholder(canvas) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'rgba(100,80,40,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(canvas.width/2, canvas.height*0.55, canvas.width*0.32, canvas.height*0.28, 0, 0, Math.PI*2);
+  ctx.fill();
+}
+
+// Chroma animation
+function hsvToRgb(h, s, v) {
+  const i = Math.floor(h * 6), f = h * 6 - i;
+  const p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+  let r, g, b;
+  switch (i % 6) {
+    case 0: r=v; g=t; b=p; break;  case 1: r=q; g=v; b=p; break;
+    case 2: r=p; g=v; b=t; break;  case 3: r=p; g=q; b=v; break;
+    case 4: r=t; g=p; b=v; break;  case 5: r=v; g=p; b=q; break;
+  }
+  return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
+}
+
+const chromaCanvases = new Map();
+let chromaHue = 0;
+
+function _renderChromaFrame(entry) {
+  const { ctx, baseImg, genusImg, ovImg, cr, cg, cb, w, h, isGlass } = entry;
+  const [pr, pg, pb] = hsvToRgb(chromaHue, 1, 1);
+  ctx.clearRect(0, 0, w, h);
+  _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, w, h, cr, cg, cb);
+  _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
+  _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
+  if (isGlass) _applyGlassEffect(ctx, w, h);
+}
+
+function animateChroma() {
+  chromaHue = (chromaHue + 0.004) % 1;
+  chromaCanvases.forEach((entry, canvas) => {
+    if (!document.contains(canvas)) { chromaCanvases.delete(canvas); return; }
+    _renderChromaFrame(entry);
+  });
+  requestAnimationFrame(animateChroma);
+}
+
+// colorId, patternId, genusId — all indices from d[] or explicitly
+function renderFrog(canvas, colorId, patternId, genusId) {
+  const isChroma = patternId === 15;
+  const isGlass  = colorId  === 22;
+  canvas.style.opacity = '';
+
+  const [, cr, cg, cb] = COLORS[colorId]         || [null, 128, 128, 128];
+  const [, pr, pg, pb] = PATTERN_COLORS[patternId] || [null, 128, 128, 128];
+  const w = canvas.width, h = canvas.height;
+
+  Promise.all([
+    loadSprite('frog_base_256.png'),
+    loadSprite('frog_' + genusId + '_256.png'),
+    loadSprite('overlay_256.png'),
+  ]).then(([baseImg, genusImg, ovImg]) => {
+    const ctx = canvas.getContext('2d');
+    if (isChroma) {
+      chromaCanvases.set(canvas, { ctx, baseImg, genusImg, ovImg, cr, cg, cb, w, h, isGlass });
+      _renderChromaFrame(chromaCanvases.get(canvas));
+    } else {
+      chromaCanvases.delete(canvas);
+      ctx.clearRect(0, 0, w, h);
+      _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, w, h, cr, cg, cb);
+      _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
+      _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
+      if (isGlass) _applyGlassEffect(ctx, w, h);
+    }
+  }).catch(() => _drawFrogPlaceholder(canvas));
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Helpers
+// ══════════════════════════════════════════════════════════════════════════════
+
+function frogFullName(colorId, patternId, genusId) {
+  const color   = (COLORS[colorId]         || [String(colorId)])[0];
+  const pattern = PATTERNS[patternId]       || ('Pat' + patternId);
+  const genus   = GENERA[genusId]           || ('Gen' + genusId);
+  return color + ' ' + pattern + ' ' + genus;
+}
+
+// Froggydex bit index: colorId * 1920 + patternId * 120 + genusId
+function fdexBit(colorId, patternId, genusId) {
+  return colorId * 1920 + patternId * 120 + genusId;
+}
+
+function toHex(r, g, b) {
+  return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Tab switching
+// ══════════════════════════════════════════════════════════════════════════════
+
+let setsInitialized = false;
+
+function tab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'sets' && !setsInitialized) { setsInitialized = true; loadSets(); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Frog Builder
+// ══════════════════════════════════════════════════════════════════════════════
+
+function initBuilder() {
+  const colorSel = document.getElementById('b-color');
+  const patSel   = document.getElementById('b-pattern');
+  const genusSel = document.getElementById('b-genus');
+
+  Object.entries(COLORS).sort((a,b) => +a[0]-+b[0]).forEach(([id, c]) => {
+    const o = document.createElement('option');
+    o.value = id; o.textContent = c[0];
+    colorSel.appendChild(o);
+  });
+  Object.entries(PATTERNS).sort((a,b) => +a[0]-+b[0]).forEach(([id, name]) => {
+    const o = document.createElement('option');
+    o.value = id; o.textContent = name;
+    patSel.appendChild(o);
+  });
+  Object.entries(GENERA).sort((a,b) => +a[0]-+b[0]).forEach(([id, name]) => {
+    const o = document.createElement('option');
+    o.value = id; o.textContent = name;
+    genusSel.appendChild(o);
+  });
+
+  builderUpdate();
+}
+
+function builderUpdate() {
+  const colorId   = parseInt(document.getElementById('b-color').value);
+  const patternId = parseInt(document.getElementById('b-pattern').value);
+  const genusId   = parseInt(document.getElementById('b-genus').value);
+
+  const canvas = document.getElementById('builder-canvas');
+  renderFrog(canvas, colorId, patternId, genusId);
+
+  const name = frogFullName(colorId, patternId, genusId);
+  document.getElementById('builder-name').textContent = name;
+  document.getElementById('builder-combo').textContent =
+    'Color ' + colorId + ' · Pattern ' + patternId + ' · Genus ' + genusId;
+
+  const bit = fdexBit(colorId, patternId, genusId);
+  document.getElementById('builder-dexid').innerHTML =
+    'Froggydex index: <strong>#' + bit + '</strong>' +
+    (bit >= 44160 ? ' <span style="color:#ff8060">(out of range)</span>' : '');
+
+  // Update color swatch dots
+  const [,cr,cg,cb] = COLORS[colorId] || [null,128,128,128];
+  document.getElementById('b-color-dot').style.background = toHex(cr,cg,cb);
+  const [,pr,pg,pb] = PATTERN_COLORS[patternId] || [null,128,128,128];
+  document.getElementById('b-pattern-dot').style.background = toHex(pr,pg,pb);
+}
+
+function builderRandomize() {
+  const colorKeys  = Object.keys(COLORS);
+  const patKeys    = Object.keys(PATTERNS);
+  const genusKeys  = Object.keys(GENERA);
+  document.getElementById('b-color').value   = colorKeys[Math.floor(Math.random()*colorKeys.length)];
+  document.getElementById('b-pattern').value = patKeys[Math.floor(Math.random()*patKeys.length)];
+  document.getElementById('b-genus').value   = genusKeys[Math.floor(Math.random()*genusKeys.length)];
+  builderUpdate();
+}
+
+function builderGoToSpecies() {
+  // Switch to species tab and scroll to matching species if it exists
+  const colorId   = parseInt(document.getElementById('b-color').value);
+  const patternId = parseInt(document.getElementById('b-pattern').value);
+  const genusId   = parseInt(document.getElementById('b-genus').value);
+  const targetName = frogFullName(colorId, patternId, genusId);
+  document.getElementById('species-search').value = targetName;
+  tab('species', document.querySelector('.tab-btn:nth-child(2)'));
+  filterSpecies(targetName);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Named Species Browser
+// ══════════════════════════════════════════════════════════════════════════════
+
+let speciesObserver = null;
+
+function getSpeciesObserver() {
+  if (!speciesObserver) {
+    speciesObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const cv = entry.target;
+        renderFrog(cv, +cv.dataset.c, +cv.dataset.p, +cv.dataset.g);
+        speciesObserver.unobserve(cv);
+        delete cv.dataset.c; delete cv.dataset.p; delete cv.dataset.g;
+      });
+    }, { rootMargin: '300px 0px' });
+  }
+  return speciesObserver;
+}
+
+function initSpecies() {
+  // Populate filter dropdowns
+  const colorFilter = document.getElementById('species-color-filter');
+  const genusFilter = document.getElementById('species-genus-filter');
+
+  // Collect unique colors/genera in species list
+  const usedColors = new Set(), usedGenera = new Set();
+  Object.values(FROG_TYPES).forEach(([colorId, genusId]) => {
+    usedColors.add(colorId); usedGenera.add(genusId);
+  });
+
+  [...usedColors].sort((a,b)=>a-b).forEach(id => {
+    const o = document.createElement('option');
+    o.value = id; o.textContent = (COLORS[id]||[String(id)])[0];
+    colorFilter.appendChild(o);
+  });
+  [...usedGenera].sort((a,b)=>a-b).forEach(id => {
+    const o = document.createElement('option');
+    o.value = id; o.textContent = GENERA[id] || String(id);
+    genusFilter.appendChild(o);
+  });
+
+  filterSpecies('');
+}
+
+function filterSpecies(query) {
+  const q = query.trim().toLowerCase();
+  const colorFilter = parseInt(document.getElementById('species-color-filter').value);
+  const genusFilter = parseInt(document.getElementById('species-genus-filter').value);
+
+  const entries = Object.entries(FROG_TYPES);
+  const filtered = entries.filter(([id, [colorId, genusId, patternId, name]]) => {
+    if (!isNaN(colorFilter) && colorId !== colorFilter) return false;
+    if (!isNaN(genusFilter) && genusId !== genusFilter) return false;
+    if (q) {
+      const fullName = name.toLowerCase();
+      if (!fullName.includes(q)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('species-count').textContent =
+    filtered.length + ' / ' + entries.length + ' species';
+
+  renderSpeciesGrid(filtered);
+}
+
+function renderSpeciesGrid(entries) {
+  const grid = document.getElementById('species-grid');
+  // Disconnect old observers
+  if (speciesObserver) grid.querySelectorAll('canvas[data-c]').forEach(cv => speciesObserver.unobserve(cv));
+  grid.querySelectorAll('canvas').forEach(cv => chromaCanvases.delete(cv));
+  grid.innerHTML = '';
+
+  const obs = getSpeciesObserver();
+  const frag = document.createDocumentFragment();
+
+  entries.forEach(([id, [colorId, genusId, patternId, name]]) => {
+    const card = document.createElement('div');
+    card.className = 'species-card';
+    card.title = name;
+    card.onclick = () => {
+      // Jump to builder with this frog's settings
+      document.getElementById('b-color').value   = colorId;
+      document.getElementById('b-pattern').value = patternId;
+      document.getElementById('b-genus').value   = genusId;
+      tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
+      builderUpdate();
+    };
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 72; canvas.height = 72;
+    canvas.className = 'species-canvas frog-thumb';
+    canvas.dataset.c = colorId;
+    canvas.dataset.p = patternId;
+    canvas.dataset.g = genusId;
+    _drawFrogPlaceholder(canvas);
+    obs.observe(canvas);
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'species-name';
+    nameEl.textContent = name;
+
+    const idEl = document.createElement('div');
+    idEl.className = 'species-id';
+    idEl.textContent = '#' + id;
+
+    const genusEl = document.createElement('div');
+    genusEl.className = 'species-genus-badge';
+    genusEl.textContent = GENERA[genusId] || ('Gen' + genusId);
+
+    card.appendChild(canvas);
+    card.appendChild(nameEl);
+    card.appendChild(genusEl);
+    card.appendChild(idEl);
+    frag.appendChild(card);
+  });
+
+  grid.appendChild(frag);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Weekly Sets
+// ══════════════════════════════════════════════════════════════════════════════
+
+let allSets = null;
+let setsCanvasObserver = null;
+
+function getSetsObserver() {
+  if (!setsCanvasObserver) {
+    setsCanvasObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const cv = entry.target;
+        renderFrog(cv, +cv.dataset.c, +cv.dataset.p, +cv.dataset.g);
+        setsCanvasObserver.unobserve(cv);
+        delete cv.dataset.c; delete cv.dataset.p; delete cv.dataset.g;
+      });
+    }, { rootMargin: '400px 0px' });
+  }
+  return setsCanvasObserver;
+}
+
+function parseSetsText(raw) {
+  const sets = [];
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  let i = 0;
+  while (i + 2 < lines.length) {
+    const code = lines[i];
+    const name = lines[i + 1];
+    const frogsStr = lines[i + 2];
+    const frogs = [];
+    frogsStr.split(',').forEach(part => {
+      const p = part.trim().split(':');
+      if (p.length === 4) {
+        try { frogs.push([parseInt(p[0]), parseInt(p[1]), parseInt(p[2]), parseInt(p[3])]); }
+        catch (_) {}
+      }
+    });
+    if (frogs.length > 0) sets.push({ code, name, frogs });
+    i += 3;
+  }
+  return sets.reverse(); // newest first
+}
+
+function parseWeekCode(code) {
+  const s = String(code);
+  if (s.length < 5) return s;
+  const yr = s.slice(0, 4), wk = parseInt(s.slice(4), 10);
+  return 'Week\u00a0' + wk + ', ' + yr;
+}
+
+async function loadSets() {
+  const statusEl = document.getElementById('sets-status');
+  statusEl.className = 'status-loading';
+  statusEl.textContent = 'Fetching sets from nimblebit.com…';
+  statusEl.style.display = 'block';
+
+  const SETS_URL = 'https://www.nimblebit.com/sets.txt';
+  // Try direct fetch first; fall back to CORS proxy if blocked
+  const urls = [
+    SETS_URL,
+    'https://corsproxy.io/?' + encodeURIComponent(SETS_URL),
+  ];
+
+  let raw = null;
+  for (const url of urls) {
+    try {
+      const resp = await fetch(url);
+      if (resp.ok) { raw = await resp.text(); break; }
+    } catch (_) {}
+  }
+
+  if (!raw) {
+    statusEl.className = 'status-error';
+    statusEl.innerHTML =
+      '<strong>Could not load sets.</strong><br>' +
+      'The nimblebit.com server may be unreachable or blocking cross-origin requests. ' +
+      'Try opening this page from a local server (e.g. <code>python3 -m http.server</code>).';
+    return;
+  }
+
+  allSets = parseSetsText(raw);
+  statusEl.style.display = 'none';
+  document.getElementById('sets-count').textContent = allSets.length + ' sets';
+  filterSets('');
+}
+
+function filterSets(query) {
+  if (!allSets) return;
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? allSets.filter(set => {
+        if (set.name.toLowerCase().includes(q)) return true;
+        return set.frogs.some(([,cId,pId,gId]) =>
+          frogFullName(cId, pId, gId).toLowerCase().includes(q));
+      })
+    : allSets;
+
+  document.getElementById('sets-count').textContent =
+    filtered.length + ' / ' + allSets.length + ' sets';
+  renderSetsGrid(filtered);
+}
+
+function renderSetsGrid(sets) {
+  const grid = document.getElementById('sets-grid');
+  if (setsCanvasObserver) grid.querySelectorAll('canvas[data-c]').forEach(cv => setsCanvasObserver.unobserve(cv));
+  grid.querySelectorAll('canvas').forEach(cv => chromaCanvases.delete(cv));
+  grid.innerHTML = '';
+
+  if (!sets.length) return;
+  const obs = getSetsObserver();
+
+  let i = 0;
+  function insertBatch() {
+    const frag = document.createDocumentFragment();
+    const end = Math.min(i + 20, sets.length);
+    for (; i < end; i++) frag.appendChild(buildSetCard(sets[i], obs));
+    grid.appendChild(frag);
+    if (i < sets.length) requestAnimationFrame(insertBatch);
+  }
+  insertBatch();
+}
+
+function buildSetCard(set, obs) {
+  const card = document.createElement('div');
+  card.className = 'set-card';
+
+  const hdr = document.createElement('div');
+  hdr.className = 'set-card-hdr';
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'set-card-name';
+  nameEl.textContent = set.name;
+  hdr.appendChild(nameEl);
+
+  const weekEl = document.createElement('div');
+  weekEl.className = 'set-card-week';
+  weekEl.textContent = parseWeekCode(set.code);
+  hdr.appendChild(weekEl);
+
+  card.appendChild(hdr);
+
+  const frogsRow = document.createElement('div');
+  frogsRow.className = 'set-frogs';
+
+  set.frogs.forEach(([count, colorId, patternId, genusId]) => {
+    const tile = document.createElement('div');
+    tile.className = 'set-frog-tile';
+    tile.style.cursor = 'pointer';
+    tile.title = frogFullName(colorId, patternId, genusId) + ' — click to build';
+    tile.onclick = () => {
+      document.getElementById('b-color').value   = colorId;
+      document.getElementById('b-pattern').value = patternId;
+      document.getElementById('b-genus').value   = genusId;
+      tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
+      builderUpdate();
+    };
+
+    const wrap = document.createElement('div');
+    wrap.className = 'set-frog-wrap';
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 56; canvas.height = 56;
+    canvas.className = 'frog-thumb';
+    canvas.dataset.c = colorId;
+    canvas.dataset.p = patternId;
+    canvas.dataset.g = genusId;
+    _drawFrogPlaceholder(canvas);
+    obs.observe(canvas);
+    wrap.appendChild(canvas);
+
+    if (count > 1) {
+      const countEl = document.createElement('div');
+      countEl.className = 'set-frog-count';
+      countEl.textContent = '\u00d7' + count;
+      wrap.appendChild(countEl);
+    }
+    tile.appendChild(wrap);
+
+    const frogLabel = document.createElement('div');
+    frogLabel.className = 'set-frog-name';
+    frogLabel.textContent = frogFullName(colorId, patternId, genusId);
+    tile.appendChild(frogLabel);
+
+    frogsRow.appendChild(tile);
+  });
+
+  card.appendChild(frogsRow);
+  return card;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Init
+// ══════════════════════════════════════════════════════════════════════════════
+
+requestAnimationFrame(animateChroma);
+initBuilder();
+initSpecies();
+</script>
+</body>
+</html>
