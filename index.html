@@ -1011,7 +1011,12 @@ function initBuilder() {
     genusSel.appendChild(o);
   });
 
-  builderRandomize();
+  // Skip randomize when a frog deep link is present — parseDeepLink() will
+  // call builderUpdate() with the correct values, and having two concurrent
+  // renderFrog() calls creates a race where whichever sprite loads last wins.
+  if (!/^#frog=\d+-\d+-\d+/.test(_initialHash)) {
+    builderRandomize();
+  }
 }
 
 function builderUpdate() {
