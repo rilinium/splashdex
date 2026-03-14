@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/og.js": {
-      "includeFiles": "frog_sprites/**,embedbanner.png,embedfrogbg.png,sets.txt,fonts/**",
+      "includeFiles": "frog_sprites/**,embedbanner.png,embedfrogbg.png,sets.txt",
       "memory": 1024,
       "maxDuration": 30
     },
