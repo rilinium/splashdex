@@ -271,7 +271,7 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.2.2</div>
+<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.0</div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
@@ -758,7 +758,8 @@ function tab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'sets' && !setsInitialized) { setsInitialized = true; loadSets(); }
+  if (name === 'sets'    && !setsInitialized)    { setsInitialized = true; loadSets(); }
+  if (name === 'species' && !breedsInitialized)  { breedsInitialized = true; filterSpecies(''); }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -889,13 +890,18 @@ function initSpecies() {
     o.value = id; o.textContent = g;
     genusFilter.appendChild(o);
   });
-
-  filterSpecies('');
+  // don't filter here — deferred until tab is first opened
 }
 
 const BREEDS_PER_PAGE = 120;
-let breedsFiltered = [];
+const COLOR_KEYS   = Object.keys(COLORS).map(Number);
+const PATTERN_KEYS = Object.keys(PATTERNS).map(Number);
+const GENUS_KEYS   = Object.keys(GENERA).map(Number);
+
 let breedsPage = 0;
+let breedsTotal = 0;
+let breedsInitialized = false;
+let breedsColorFilter = null, breedsPatternFilter = null, breedsGenusFilter = null, breedsQuery = '';
 
 function resetBreedFilters() {
   document.getElementById('species-search').value = '';
@@ -906,39 +912,19 @@ function resetBreedFilters() {
 }
 
 function filterSpecies(query) {
-  const q             = query.trim().toLowerCase();
+  breedsQuery         = query.trim().toLowerCase();
   const colorVal      = document.getElementById('species-color-filter').value;
   const patternVal    = document.getElementById('species-pattern-filter').value;
   const genusVal      = document.getElementById('species-genus-filter').value;
-  const colorFilter   = colorVal   !== '' ? parseInt(colorVal)   : null;
-  const patternFilter = patternVal !== '' ? parseInt(patternVal) : null;
-  const genusFilter   = genusVal   !== '' ? parseInt(genusVal)   : null;
-
-  const colorKeys   = Object.keys(COLORS).map(Number);
-  const patternKeys = Object.keys(PATTERNS).map(Number);
-  const genusKeys   = Object.keys(GENERA).map(Number);
-
-  breedsFiltered = [];
-  for (const c of colorKeys) {
-    if (colorFilter !== null && c !== colorFilter) continue;
-    for (const p of patternKeys) {
-      if (patternFilter !== null && p !== patternFilter) continue;
-      for (const g of genusKeys) {
-        if (genusFilter !== null && g !== genusFilter) continue;
-        if (q && !frogFullName(c, p, g).toLowerCase().includes(q)) continue;
-        breedsFiltered.push([c, p, g]);
-      }
-    }
-  }
-
+  breedsColorFilter   = colorVal   !== '' ? parseInt(colorVal)   : null;
+  breedsPatternFilter = patternVal !== '' ? parseInt(patternVal) : null;
+  breedsGenusFilter   = genusVal   !== '' ? parseInt(genusVal)   : null;
   breedsPage = 0;
-  document.getElementById('species-count').textContent =
-    breedsFiltered.length.toLocaleString() + ' / 44,160 breeds';
   renderSpeciesGrid();
 }
 
 function breedsChangePage(delta) {
-  const totalPages = Math.ceil(breedsFiltered.length / BREEDS_PER_PAGE);
+  const totalPages = Math.ceil(breedsTotal / BREEDS_PER_PAGE) || 1;
   breedsPage = Math.max(0, Math.min(breedsPage + delta, totalPages - 1));
   renderSpeciesGrid();
   document.getElementById('tab-species').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -950,25 +936,43 @@ function renderSpeciesGrid() {
   grid.querySelectorAll('canvas').forEach(cv => chromaCanvases.delete(cv));
   grid.innerHTML = '';
 
-  const totalPages = Math.ceil(breedsFiltered.length / BREEDS_PER_PAGE);
+  // Single pass: count total + collect only this page's items (max 120 objects)
+  const pageStart = breedsPage * BREEDS_PER_PAGE;
+  const pageEnd   = pageStart + BREEDS_PER_PAGE;
+  let total = 0;
+  const pageItems = [];
+  for (const c of COLOR_KEYS) {
+    if (breedsColorFilter !== null && c !== breedsColorFilter) continue;
+    for (const p of PATTERN_KEYS) {
+      if (breedsPatternFilter !== null && p !== breedsPatternFilter) continue;
+      for (const g of GENUS_KEYS) {
+        if (breedsGenusFilter !== null && g !== breedsGenusFilter) continue;
+        if (breedsQuery && !frogFullName(c, p, g).toLowerCase().includes(breedsQuery)) continue;
+        if (total >= pageStart && total < pageEnd) pageItems.push([c, p, g]);
+        total++;
+      }
+    }
+  }
+  breedsTotal = total;
+
+  const totalPages = Math.ceil(total / BREEDS_PER_PAGE) || 1;
   const pagEl  = document.getElementById('breeds-pagination');
   const lblEl  = document.getElementById('breeds-page-lbl');
   const prevEl = document.getElementById('breeds-prev');
   const nextEl = document.getElementById('breeds-next');
 
-  pagEl.style.display = breedsFiltered.length > BREEDS_PER_PAGE ? '' : 'none';
+  document.getElementById('species-count').textContent =
+    total.toLocaleString() + ' / 44,160 breeds';
+  pagEl.style.display = total > BREEDS_PER_PAGE ? '' : 'none';
   lblEl.textContent = 'Page ' + (breedsPage + 1) + ' of ' + totalPages;
   prevEl.disabled = breedsPage === 0;
   nextEl.disabled = breedsPage >= totalPages - 1;
 
-  if (!breedsFiltered.length) return;
+  if (!pageItems.length) return;
   const obs  = getSpeciesObserver();
   const frag = document.createDocumentFragment();
-  const start = breedsPage * BREEDS_PER_PAGE;
-  const end   = Math.min(start + BREEDS_PER_PAGE, breedsFiltered.length);
 
-  for (let i = start; i < end; i++) {
-    const [colorId, patternId, genusId] = breedsFiltered[i];
+  for (const [colorId, patternId, genusId] of pageItems) {
     const card = document.createElement('div');
     card.className = 'species-card';
     const label = frogFullName(colorId, patternId, genusId);
