@@ -177,12 +177,12 @@
     .species-canvas { image-rendering: pixelated; }
     .species-name { font-size: 11px; font-weight: 500; color: var(--text); text-align: center; line-height: 1.3; }
     .species-id { font-size: 10px; color: var(--overlay0); }
-    .species-genus-badge {
-      font-size: 10px; color: var(--sapphire);
-      background: color-mix(in srgb, var(--sapphire) 10%, transparent);
-      border: 1px solid color-mix(in srgb, var(--sapphire) 25%, transparent);
-      border-radius: 4px; padding: 1px 5px;
+    .breeds-pagination {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin-top: 16px; flex-wrap: wrap;
     }
+    .breeds-pagination .btn { min-width: 80px; }
+    .breeds-page-lbl { font-size: 12px; color: var(--overlay1); white-space: nowrap; }
 
     /* ── Sets ── */
     .sets-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
@@ -237,7 +237,7 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">v1.1.1</div>
+<div class="hdr-version">v1.2.0</div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
@@ -320,6 +320,11 @@
       <span class="count-lbl" id="species-count"></span>
     </div>
     <div class="species-grid" id="species-grid"></div>
+    <div class="breeds-pagination" id="breeds-pagination" style="display:none">
+      <button class="btn" id="breeds-prev" onclick="breedsChangePage(-1)">← Prev</button>
+      <span class="breeds-page-lbl" id="breeds-page-lbl"></span>
+      <button class="btn" id="breeds-next" onclick="breedsChangePage(1)">Next →</button>
+    </div>
   </div>
 
   <!-- ── Weekly Sets ── -->
@@ -853,20 +858,24 @@ function initSpecies() {
   filterSpecies('');
 }
 
+const BREEDS_PER_PAGE = 120;
+let breedsFiltered = [];
+let breedsPage = 0;
+
 function filterSpecies(query) {
-  const q            = query.trim().toLowerCase();
-  const colorVal     = document.getElementById('species-color-filter').value;
-  const patternVal   = document.getElementById('species-pattern-filter').value;
-  const genusVal     = document.getElementById('species-genus-filter').value;
-  const colorFilter  = colorVal   !== '' ? parseInt(colorVal)   : null;
-  const patternFilter= patternVal !== '' ? parseInt(patternVal) : null;
-  const genusFilter  = genusVal   !== '' ? parseInt(genusVal)   : null;
+  const q             = query.trim().toLowerCase();
+  const colorVal      = document.getElementById('species-color-filter').value;
+  const patternVal    = document.getElementById('species-pattern-filter').value;
+  const genusVal      = document.getElementById('species-genus-filter').value;
+  const colorFilter   = colorVal   !== '' ? parseInt(colorVal)   : null;
+  const patternFilter = patternVal !== '' ? parseInt(patternVal) : null;
+  const genusFilter   = genusVal   !== '' ? parseInt(genusVal)   : null;
 
   const colorKeys   = Object.keys(COLORS).map(Number);
   const patternKeys = Object.keys(PATTERNS).map(Number);
   const genusKeys   = Object.keys(GENERA).map(Number);
 
-  const filtered = [];
+  breedsFiltered = [];
   for (const c of colorKeys) {
     if (colorFilter !== null && c !== colorFilter) continue;
     for (const p of patternKeys) {
@@ -874,69 +883,83 @@ function filterSpecies(query) {
       for (const g of genusKeys) {
         if (genusFilter !== null && g !== genusFilter) continue;
         if (q && !frogFullName(c, p, g).toLowerCase().includes(q)) continue;
-        filtered.push([c, p, g]);
+        breedsFiltered.push([c, p, g]);
       }
     }
   }
 
+  breedsPage = 0;
   document.getElementById('species-count').textContent =
-    filtered.length.toLocaleString() + ' / 44,160 breeds';
-
-  renderSpeciesGrid(filtered);
+    breedsFiltered.length.toLocaleString() + ' / 44,160 breeds';
+  renderSpeciesGrid();
 }
 
-function renderSpeciesGrid(combos) {
+function breedsChangePage(delta) {
+  const totalPages = Math.ceil(breedsFiltered.length / BREEDS_PER_PAGE);
+  breedsPage = Math.max(0, Math.min(breedsPage + delta, totalPages - 1));
+  renderSpeciesGrid();
+  document.getElementById('tab-species').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderSpeciesGrid() {
   const grid = document.getElementById('species-grid');
   if (speciesObserver) grid.querySelectorAll('canvas').forEach(cv => speciesObserver.unobserve(cv));
   grid.querySelectorAll('canvas').forEach(cv => chromaCanvases.delete(cv));
   grid.innerHTML = '';
 
-  if (!combos.length) return;
-  const obs = getSpeciesObserver();
+  const totalPages = Math.ceil(breedsFiltered.length / BREEDS_PER_PAGE);
+  const pagEl  = document.getElementById('breeds-pagination');
+  const lblEl  = document.getElementById('breeds-page-lbl');
+  const prevEl = document.getElementById('breeds-prev');
+  const nextEl = document.getElementById('breeds-next');
 
-  let i = 0;
-  function insertBatch() {
-    const frag = document.createDocumentFragment();
-    const end = Math.min(i + 40, combos.length);
-    for (; i < end; i++) {
-      const [colorId, patternId, genusId] = combos[i];
-      const card = document.createElement('div');
-      card.className = 'species-card';
-      const label = frogFullName(colorId, patternId, genusId);
-      card.title = label;
-      card.onclick = () => {
-        document.getElementById('b-color').value   = colorId;
-        document.getElementById('b-pattern').value = patternId;
-        document.getElementById('b-genus').value   = genusId;
-        tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
-        builderUpdate();
-      };
+  pagEl.style.display = breedsFiltered.length > BREEDS_PER_PAGE ? '' : 'none';
+  lblEl.textContent = 'Page ' + (breedsPage + 1) + ' of ' + totalPages;
+  prevEl.disabled = breedsPage === 0;
+  nextEl.disabled = breedsPage >= totalPages - 1;
 
-      const canvas = document.createElement('canvas');
-      canvas.width = 72; canvas.height = 72;
-      canvas.className = 'species-canvas frog-thumb';
-      breedsCanvasData.set(canvas, [colorId, patternId, genusId]);
-      _drawFrogPlaceholder(canvas);
-      obs.observe(canvas);
+  if (!breedsFiltered.length) return;
+  const obs  = getSpeciesObserver();
+  const frag = document.createDocumentFragment();
+  const start = breedsPage * BREEDS_PER_PAGE;
+  const end   = Math.min(start + BREEDS_PER_PAGE, breedsFiltered.length);
 
-      const nameEl = document.createElement('div');
-      nameEl.className = 'species-name';
-      nameEl.textContent = label;
+  for (let i = start; i < end; i++) {
+    const [colorId, patternId, genusId] = breedsFiltered[i];
+    const card = document.createElement('div');
+    card.className = 'species-card';
+    const label = frogFullName(colorId, patternId, genusId);
+    card.title = label;
+    card.onclick = () => {
+      document.getElementById('b-color').value   = colorId;
+      document.getElementById('b-pattern').value = patternId;
+      document.getElementById('b-genus').value   = genusId;
+      tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
+      builderUpdate();
+    };
 
-      const dexId = colorId * 1920 + patternId * 120 + genusId;
-      const idEl = document.createElement('div');
-      idEl.className = 'species-id';
-      idEl.textContent = '#' + dexId;
+    const canvas = document.createElement('canvas');
+    canvas.width = 72; canvas.height = 72;
+    canvas.className = 'species-canvas frog-thumb';
+    breedsCanvasData.set(canvas, [colorId, patternId, genusId]);
+    _drawFrogPlaceholder(canvas);
+    obs.observe(canvas);
 
-      card.appendChild(canvas);
-      card.appendChild(nameEl);
-      card.appendChild(idEl);
-      frag.appendChild(card);
-    }
-    grid.appendChild(frag);
-    if (i < combos.length) requestAnimationFrame(insertBatch);
+    const nameEl = document.createElement('div');
+    nameEl.className = 'species-name';
+    nameEl.textContent = label;
+
+    const dexId = colorId * 1920 + patternId * 120 + genusId;
+    const idEl = document.createElement('div');
+    idEl.className = 'species-id';
+    idEl.textContent = '#' + dexId;
+
+    card.appendChild(canvas);
+    card.appendChild(nameEl);
+    card.appendChild(idEl);
+    frag.appendChild(card);
   }
-  insertBatch();
+  grid.appendChild(frag);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
