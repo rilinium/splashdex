@@ -1,0 +1,19 @@
+{
+  "name": "Splashdex",
+  "short_name": "Splashdex",
+  "description": "Pocket Frogs breed reference — 44,160 combinations, weekly sets, and frog builder",
+  "start_url": "/frog",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1e1e2e",
+  "theme_color": "#181825",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/Splashdex.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
