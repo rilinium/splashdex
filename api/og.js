@@ -1,6 +1,6 @@
 'use strict';
 
-const { createCanvas, loadImage, GlobalFonts } = require('@napi-rs/canvas');
+const { createCanvas, loadImage } = require('@napi-rs/canvas');
 const path = require('path');
 const fs   = require('fs');
 
@@ -10,14 +10,6 @@ const SPRITES_DIR = path.join(__dirname, '..', 'frog_sprites');
 const BANNER_PATH = path.join(__dirname, '..', 'embedbanner.png');
 const SETS_PATH   = path.join(__dirname, '..', 'sets.txt');
 
-// ── Load system fonts (Amazon Linux 2 ships DejaVu/Liberation in /usr/share/fonts) ──
-try {
-  GlobalFonts.loadSystemFonts();
-  const families = GlobalFonts.families.map(f => f.family);
-  console.log('[og] system fonts:', families.length, families.slice(0, 5).join(', ') || '(none)');
-} catch (err) {
-  console.error('[og] font init failed:', err.message);
-}
 
 // ── Sprite cache (warm across invocations in the same Lambda instance) ────────
 const _imgCache = {};
@@ -152,9 +144,8 @@ module.exports = async (req, res) => {
         return serveBanner(res);
       }
 
-      const label  = frogFullName(c, p, g);
-      const SIZE   = 512, PAD = 48, TEXT_H = 110;
-      const out    = createCanvas(SIZE + PAD * 2, SIZE + PAD * 2 + TEXT_H);
+      const SIZE   = 512, PAD = 48;
+      const out    = createCanvas(SIZE + PAD * 2, SIZE + PAD * 2);
       const ctx    = out.getContext('2d');
 
       drawBackground(ctx, out.width, out.height);
@@ -162,15 +153,6 @@ module.exports = async (req, res) => {
       const frogCv = createCanvas(SIZE, SIZE);
       await renderFrog(frogCv, c, p, g);
       ctx.drawImage(frogCv, PAD, PAD);
-
-      ctx.textAlign    = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillStyle    = 'rgba(205,214,244,0.90)';
-      ctx.font         = 'bold 36px sans-serif';
-      ctx.fillText(label, out.width / 2, SIZE + PAD + 16);
-      ctx.fillStyle    = 'rgba(166,173,200,0.50)';
-      ctx.font         = '22px sans-serif';
-      ctx.fillText('splashdex', out.width / 2, SIZE + PAD + 62);
 
       res.end(out.toBuffer('image/png'));
       return;
@@ -211,33 +193,14 @@ module.exports = async (req, res) => {
       }
       if (!frogCanvases.length) return serveBanner(res);
 
-      const totalW  = frogCanvases.length * (FROG_SIZE + GAP) - GAP;
-      const H_PAD   = 28, V_PAD = 24;
-      const LABEL_H = weekCode ? 108 : 88;
-      const out     = createCanvas(totalW + H_PAD * 2, FROG_SIZE + V_PAD * 2 + LABEL_H);
-      const ctx     = out.getContext('2d');
+      const totalW = frogCanvases.length * (FROG_SIZE + GAP) - GAP;
+      const H_PAD  = 28, V_PAD = 24;
+      const out    = createCanvas(totalW + H_PAD * 2, FROG_SIZE + V_PAD * 2);
+      const ctx    = out.getContext('2d');
 
       drawBackground(ctx, out.width, out.height, true);
       frogCanvases.forEach((fc, i) =>
         ctx.drawImage(fc, H_PAD + i * (FROG_SIZE + GAP), V_PAD));
-
-      const labelTop = FROG_SIZE + V_PAD;
-      ctx.textAlign    = 'center';
-      ctx.textBaseline = 'top';
-
-      ctx.fillStyle = 'rgba(205,214,244,0.90)';
-      ctx.font      = 'bold 30px sans-serif';
-      ctx.fillText(setName, out.width / 2, labelTop + 12);
-
-      if (weekCode) {
-        ctx.fillStyle = 'rgba(166,173,200,0.55)';
-        ctx.font      = '20px sans-serif';
-        ctx.fillText(parseWeekCode(weekCode), out.width / 2, labelTop + 50);
-      }
-
-      ctx.fillStyle = 'rgba(166,173,200,0.40)';
-      ctx.font      = '18px sans-serif';
-      ctx.fillText('splashdex', out.width / 2, labelTop + (weekCode ? 78 : 50));
 
       res.end(out.toBuffer('image/png'));
       return;
