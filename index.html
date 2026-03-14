@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Splashdex — Pocket Frogs</title>
+  <title>Splashdex</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <style>
     /* ── Catppuccin Mocha ── */
@@ -226,6 +226,38 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--surface1); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--surface2); }
+
+    /* ── Mobile ── */
+    @media (max-width: 600px) {
+      .hdr { padding: 10px 14px; gap: 8px; }
+      .hdr-logo { height: 22px; }
+      .hdr-right { display: none; }
+
+      .tabs { padding: 0 6px; overflow-x: auto; scrollbar-width: none; }
+      .tabs::-webkit-scrollbar { display: none; }
+      .tab-btn { padding: 10px 14px; font-size: 12px; white-space: nowrap; }
+
+      .tab-panel { padding: 14px 12px; }
+
+      .builder-layout { flex-direction: column; align-items: stretch; }
+      .builder-preview { align-items: center; }
+      .builder-controls { min-width: unset; }
+      .preview-canvas-wrap { width: 160px; height: 160px; align-self: center; }
+      #builder-canvas { width: 160px !important; height: 160px !important; }
+
+      .species-toolbar { gap: 6px; }
+      .search-input { min-width: unset; width: 100%; }
+      .filter-select { flex: 1; min-width: 0; font-size: 11px; padding: 6px 6px; }
+      .species-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; }
+      .species-card { padding: 8px 6px; }
+      .species-canvas { width: 60px !important; height: 60px !important; }
+
+      .sets-toolbar { gap: 6px; }
+      .set-card { padding: 10px 12px; }
+      .set-frog-tile { min-width: 56px; padding: 6px 4px; }
+
+      .hdr-version { font-size: 9px; bottom: 6px; right: 8px; }
+    }
   </style>
 </head>
 <body>
@@ -237,7 +269,7 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">v1.2.0</div>
+<div class="hdr-version">v1.2.1</div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
@@ -317,6 +349,7 @@
       <select class="filter-select" id="species-genus-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
         <option value="">All Genera</option>
       </select>
+      <button class="btn btn-sm" style="background:var(--surface0);color:var(--subtext0);border:1px solid var(--surface1)" onclick="resetBreedFilters()">Reset</button>
       <span class="count-lbl" id="species-count"></span>
     </div>
     <div class="species-grid" id="species-grid"></div>
@@ -861,6 +894,14 @@ function initSpecies() {
 const BREEDS_PER_PAGE = 120;
 let breedsFiltered = [];
 let breedsPage = 0;
+
+function resetBreedFilters() {
+  document.getElementById('species-search').value = '';
+  document.getElementById('species-color-filter').value = '';
+  document.getElementById('species-pattern-filter').value = '';
+  document.getElementById('species-genus-filter').value = '';
+  filterSpecies('');
+}
 
 function filterSpecies(query) {
   const q             = query.trim().toLowerCase();
