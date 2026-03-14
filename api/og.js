@@ -15,9 +15,9 @@ const FONTS_DIR   = path.join(__dirname, '..', 'fonts');
 // Use register(Buffer) so a missing file throws clearly instead of silently failing.
 // Use unique aliases so weight matching is unambiguous.
 try {
-  GlobalFonts.register(fs.readFileSync(path.join(FONTS_DIR, 'Roboto-Regular.ttf')));
-  GlobalFonts.register(fs.readFileSync(path.join(FONTS_DIR, 'Roboto-Bold.ttf')));
-  console.log('[og] fonts loaded, has Roboto:', GlobalFonts.has('Roboto'));
+  GlobalFonts.registerFromPath(path.join(FONTS_DIR, 'Roboto-Regular.ttf'));
+  GlobalFonts.registerFromPath(path.join(FONTS_DIR, 'Roboto-Bold.ttf'));
+  console.log('[og] families:', GlobalFonts.families.map(f => f.family).join(', ') || '(none)');
 } catch (err) {
   console.error('[og] font load failed:', err.message);
 }
