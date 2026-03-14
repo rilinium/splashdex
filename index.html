@@ -231,6 +231,26 @@
     }
     .frog-thumb { image-rendering: pixelated; }
 
+    /* ── Set Builder ── */
+    .setbuilder-layout { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+    .setbuilder-picker { flex-shrink: 0; min-width: 260px; }
+    .setbuilder-divider { border-top: 1px solid var(--surface0); margin: 14px 0; }
+    .setbuilder-frog-selector { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+    .setbuilder-frog-controls { flex: 1; min-width: 200px; }
+    .setbuilder-preview { flex: 1; min-width: 280px; }
+    .sb-count-row { display: flex; align-items: center; gap: 10px; }
+    .sb-count-display { font-size: 16px; font-weight: 700; color: var(--text); min-width: 28px; text-align: center; }
+    .sb-empty-msg { color: var(--overlay0); font-size: 13px; font-style: italic; padding: 20px 0; }
+    .sb-remove-btn {
+      position: absolute; top: 2px; right: 2px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--red); color: var(--crust);
+      border: none; cursor: pointer; font-size: 10px; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .15s; padding: 0;
+    }
+    .set-frog-tile:hover .sb-remove-btn { opacity: 1; }
+
     /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -270,6 +290,12 @@
       .set-frog-tile { min-width: 56px; padding: 6px 4px; }
 
       .hdr-version { font-size: 9px; bottom: 6px; right: 8px; }
+
+      .setbuilder-layout { flex-direction: column; }
+      .setbuilder-picker { min-width: unset; width: 100%; }
+      .setbuilder-frog-selector { flex-direction: column; align-items: center; }
+      .setbuilder-frog-controls { min-width: unset; width: 100%; }
+      .setbuilder-preview { min-width: unset; width: 100%; }
     }
   </style>
 </head>
@@ -282,11 +308,12 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.2</div>
+<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.0.3</div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
   <button class="tab-btn"        onclick="tab('species', this)">🐸 Breeds</button>
+  <button class="tab-btn"        onclick="tab('setbuilder', this)">📋 Set Builder</button>
   <button class="tab-btn"        onclick="tab('sets', this)">📅 Weekly Sets</button>
 </nav>
 
@@ -374,6 +401,80 @@
       <button class="btn" id="breeds-prev" onclick="breedsChangePage(-1)">← Prev</button>
       <span class="breeds-page-lbl" id="breeds-page-lbl"></span>
       <button class="btn" id="breeds-next" onclick="breedsChangePage(1)">Next →</button>
+    </div>
+  </div>
+
+  <!-- ── Set Builder ── -->
+  <div class="tab-panel" id="tab-setbuilder">
+    <div class="card">
+      <div class="card-title">Build a Custom Set</div>
+      <div class="setbuilder-layout">
+
+        <!-- Left: frog picker + set name -->
+        <div class="setbuilder-picker">
+          <div class="form-group">
+            <label class="form-label" for="sb-set-name">Set Name</label>
+            <input class="form-input" type="text" id="sb-set-name" placeholder="My Custom Set" oninput="renderSbPreview()">
+          </div>
+          <div class="setbuilder-divider"></div>
+          <div class="setbuilder-frog-selector">
+            <div class="builder-preview">
+              <div class="preview-canvas-wrap" style="width:140px;height:140px">
+                <canvas id="sb-canvas" width="140" height="140" style="image-rendering:pixelated"></canvas>
+              </div>
+            </div>
+            <div class="setbuilder-frog-controls">
+              <div class="form-group">
+                <label class="form-label">Color</label>
+                <div class="color-preview-row">
+                  <div class="color-dot" id="sb-color-dot"></div>
+                  <select class="form-input" id="sb-color" onchange="sbUpdate()"></select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Pattern</label>
+                <div class="color-preview-row">
+                  <div class="color-dot" id="sb-pattern-dot"></div>
+                  <select class="form-input" id="sb-pattern" onchange="sbUpdate()"></select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Genus</label>
+                <select class="form-input" id="sb-genus" onchange="sbUpdate()"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Quantity</label>
+                <div class="sb-count-row">
+                  <button class="btn btn-sm" style="background:var(--surface0);border:1px solid var(--surface1);color:var(--text)" onclick="sbCountAdj(-1)">−</button>
+                  <span id="sb-count-val" class="sb-count-display">1</span>
+                  <button class="btn btn-sm" style="background:var(--surface0);border:1px solid var(--surface1);color:var(--text)" onclick="sbCountAdj(1)">+</button>
+                </div>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-primary" onclick="sbAddFrog()">+ Add to Set</button>
+                <button class="btn btn-sm" style="background:var(--surface0);color:var(--subtext0);border:1px solid var(--surface1)" onclick="sbRandomize()">🎲</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: live set preview -->
+        <div class="setbuilder-preview">
+          <div class="form-label" style="margin-bottom:10px">Set Preview</div>
+          <div class="sb-empty-msg" id="sb-empty-msg">Add frogs to start building your set.</div>
+          <div class="set-card" id="sb-set-card" style="display:none">
+            <div class="set-card-hdr">
+              <div class="set-card-name" id="sb-preview-name">My Custom Set</div>
+              <div class="set-card-week" id="sb-frog-badge">0 frogs</div>
+            </div>
+            <div class="set-frogs" id="sb-frogs-row"></div>
+          </div>
+          <div class="btn-row" style="margin-top:12px">
+            <button class="btn btn-sm" id="sb-clear-btn" style="display:none;background:var(--surface0);color:var(--red);border:1px solid var(--surface1)" onclick="sbClear()">🗑 Clear Set</button>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
@@ -773,8 +874,9 @@ function tab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
-  if (name === 'sets'    && !setsInitialized)    { setsInitialized = true; loadSets(); }
-  if (name === 'species' && !breedsInitialized)  { breedsInitialized = true; filterSpecies(''); }
+  if (name === 'sets'       && !setsInitialized)       { setsInitialized = true; loadSets(); }
+  if (name === 'species'    && !breedsInitialized)     { breedsInitialized = true; filterSpecies(''); }
+  if (name === 'setbuilder' && !sbBuilderInitialized)  { initSetBuilder(); }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1226,6 +1328,133 @@ function buildSetCard(set, obs) {
 
   card.appendChild(frogsRow);
   return card;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Set Builder
+// ══════════════════════════════════════════════════════════════════════════════
+
+let sbFrogs = [];            // [{colorId, patternId, genusId, count}]
+let sbCount = 1;
+let sbBuilderInitialized = false;
+
+function initSetBuilder() {
+  sbBuilderInitialized = true;
+  const colorSel = document.getElementById('sb-color');
+  const patSel   = document.getElementById('sb-pattern');
+  const genusSel = document.getElementById('sb-genus');
+  Object.entries(COLORS).sort((a,b)=>+a[0]-+b[0]).forEach(([id,c])=>{
+    const o = document.createElement('option'); o.value=id; o.textContent=c[0]; colorSel.appendChild(o);
+  });
+  Object.entries(PATTERNS).sort((a,b)=>+a[0]-+b[0]).forEach(([id,n])=>{
+    const o = document.createElement('option'); o.value=id; o.textContent=n; patSel.appendChild(o);
+  });
+  Object.entries(GENERA).sort((a,b)=>+a[0]-+b[0]).forEach(([id,n])=>{
+    const o = document.createElement('option'); o.value=id; o.textContent=n; genusSel.appendChild(o);
+  });
+  sbRandomize();
+}
+
+function sbUpdate() {
+  const colorId   = parseInt(document.getElementById('sb-color').value);
+  const patternId = parseInt(document.getElementById('sb-pattern').value);
+  const genusId   = parseInt(document.getElementById('sb-genus').value);
+  renderFrog(document.getElementById('sb-canvas'), colorId, patternId, genusId);
+  const [,cr,cg,cb] = COLORS[colorId]          || [null,128,128,128];
+  const [,pr,pg,pb] = PATTERN_COLORS[patternId] || [null,128,128,128];
+  document.getElementById('sb-color-dot').style.background   = toHex(cr,cg,cb);
+  document.getElementById('sb-pattern-dot').style.background = toHex(pr,pg,pb);
+}
+
+function sbRandomize() {
+  const ck = Object.keys(COLORS), pk = Object.keys(PATTERNS), gk = Object.keys(GENERA);
+  document.getElementById('sb-color').value   = ck[Math.floor(Math.random()*ck.length)];
+  document.getElementById('sb-pattern').value = pk[Math.floor(Math.random()*pk.length)];
+  document.getElementById('sb-genus').value   = gk[Math.floor(Math.random()*gk.length)];
+  sbUpdate();
+}
+
+function sbCountAdj(delta) {
+  sbCount = Math.max(1, Math.min(99, sbCount + delta));
+  document.getElementById('sb-count-val').textContent = sbCount;
+}
+
+function sbAddFrog() {
+  const colorId   = parseInt(document.getElementById('sb-color').value);
+  const patternId = parseInt(document.getElementById('sb-pattern').value);
+  const genusId   = parseInt(document.getElementById('sb-genus').value);
+  sbFrogs.push({ colorId, patternId, genusId, count: sbCount });
+  renderSbPreview();
+}
+
+function sbRemoveFrog(idx) {
+  sbFrogs.splice(idx, 1);
+  renderSbPreview();
+}
+
+function sbClear() {
+  sbFrogs = [];
+  renderSbPreview();
+}
+
+function renderSbPreview() {
+  const setName  = document.getElementById('sb-set-name').value.trim() || 'My Custom Set';
+  const card     = document.getElementById('sb-set-card');
+  const emptyMsg = document.getElementById('sb-empty-msg');
+  const clearBtn = document.getElementById('sb-clear-btn');
+
+  document.getElementById('sb-preview-name').textContent = setName;
+  const totalFrogs = sbFrogs.reduce((s,f) => s + f.count, 0);
+  document.getElementById('sb-frog-badge').textContent = totalFrogs + (totalFrogs === 1 ? ' frog' : ' frogs');
+
+  if (!sbFrogs.length) {
+    card.style.display = 'none';
+    emptyMsg.style.display = '';
+    clearBtn.style.display = 'none';
+    return;
+  }
+  card.style.display = '';
+  emptyMsg.style.display = 'none';
+  clearBtn.style.display = '';
+
+  const frogsRow = document.getElementById('sb-frogs-row');
+  frogsRow.innerHTML = '';
+  sbFrogs.forEach(({ colorId, patternId, genusId, count }, idx) => {
+    const tile = document.createElement('div');
+    tile.className = 'set-frog-tile';
+    tile.style.position = 'relative';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'set-frog-wrap';
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 56; canvas.height = 56;
+    canvas.className = 'frog-thumb';
+    renderFrog(canvas, colorId, patternId, genusId);
+    wrap.appendChild(canvas);
+
+    if (count > 1) {
+      const countEl = document.createElement('div');
+      countEl.className = 'set-frog-count';
+      countEl.textContent = '\u00d7' + count;
+      wrap.appendChild(countEl);
+    }
+    tile.appendChild(wrap);
+
+    const label = document.createElement('div');
+    label.className = 'set-frog-name';
+    label.textContent = frogFullName(colorId, patternId, genusId);
+    tile.appendChild(label);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'sb-remove-btn';
+    removeBtn.title = 'Remove';
+    removeBtn.textContent = '\u00d7';
+    removeBtn.onclick = (e) => { e.stopPropagation(); sbRemoveFrog(idx); };
+    tile.appendChild(removeBtn);
+
+    frogsRow.appendChild(tile);
+  });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
