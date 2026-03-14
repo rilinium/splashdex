@@ -891,15 +891,16 @@ function renderFrog(canvas, colorId, patternId, genusId) {
   const [, cr, cg, cb] = COLORS[colorId]          || [null, 128, 128, 128];
   const [, pr, pg, pb] = PATTERN_COLORS[patternId] || [null, 128, 128, 128];
 
-  // HiDPI / Retina: scale canvas buffer up by devicePixelRatio, shrink back via CSS
+  // HiDPI / Retina: scale canvas buffer up by devicePixelRatio, shrink back via CSS.
+  // Store CSS size once — reading canvas.width after scaling would give the wrong value.
   const dpr = window.devicePixelRatio || 1;
-  const cssW = canvas.width, cssH = canvas.height;
-  if (canvas.width !== cssW * dpr || canvas._dprSet !== dpr) {
-    canvas.width  = cssW * dpr;
-    canvas.height = cssH * dpr;
+  if (!canvas._cssW) { canvas._cssW = canvas.width; canvas._cssH = canvas.height; }
+  const cssW = canvas._cssW, cssH = canvas._cssH;
+  if (canvas.width !== Math.round(cssW * dpr)) {
+    canvas.width  = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
     canvas.style.width  = cssW + 'px';
     canvas.style.height = cssH + 'px';
-    canvas._dprSet = dpr;
   }
   const w = canvas.width, h = canvas.height;
 
