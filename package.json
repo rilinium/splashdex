@@ -4,6 +4,7 @@
   "description": "Pocket Frogs breed reference, weekly sets, and frog builder",
   "license": "MIT",
   "dependencies": {
-    "@napi-rs/canvas": "^0.1.96"
+    "@napi-rs/canvas": "^0.1.96",
+    "gif-encoder-2": "^1.0.5"
   }
 }

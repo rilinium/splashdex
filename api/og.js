@@ -1,6 +1,7 @@
 'use strict';
 
 const { createCanvas, loadImage } = require('@napi-rs/canvas');
+const GIFEncoder = require('gif-encoder-2');
 const path = require('path');
 const fs   = require('fs');
 
@@ -11,6 +12,10 @@ const BANNER_PATH  = path.join(__dirname, '..', 'embedbanner.png');
 const FROGBG_PATH  = path.join(__dirname, '..', 'embedfrogbg.png');
 const SETS_PATH    = path.join(__dirname, '..', 'sets.txt');
 
+const CHROMA_ID  = 15;
+const GIF_FRAMES = 16;
+const GIF_DELAY  = 80; // ms per frame → 1.28 s full cycle
+
 
 // ── Sprite cache (warm across invocations in the same Lambda instance) ────────
 const _imgCache = {};
@@ -19,13 +24,30 @@ async function getSprite(name) {
   return _imgCache[name];
 }
 
-// ── Rendering helpers (same logic as the browser) ─────────────────────────────
+
+// ── Rendering helpers ─────────────────────────────────────────────────────────
+
+// Convert HSL (h: 0-360, s/l: 0-1) → [r, g, b] (0-255)
+function hslToRgb(h, s, l) {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r, g, b;
+  if      (h < 60)  { r = c; g = x; b = 0; }
+  else if (h < 120) { r = x; g = c; b = 0; }
+  else if (h < 180) { r = 0; g = c; b = x; }
+  else if (h < 240) { r = 0; g = x; b = c; }
+  else if (h < 300) { r = x; g = 0; b = c; }
+  else              { r = c; g = 0; b = x; }
+  return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+}
+
 function _tintLayer(ctx, img, dx, dy, dw, dh, r, g, b) {
-  const tmp  = createCanvas(dw, dh);
-  const tc   = tmp.getContext('2d');
+  const tmp = createCanvas(dw, dh);
+  const tc  = tmp.getContext('2d');
   tc.drawImage(img, 0, 0, 256, 256, 0, 0, dw, dh);
-  const id   = tc.getImageData(0, 0, dw, dh);
-  const d    = id.data;
+  const id = tc.getImageData(0, 0, dw, dh);
+  const d  = id.data;
   for (let i = 0; i < d.length; i += 4) {
     d[i]   = d[i]   * r / 255;
     d[i+1] = d[i+1] * g / 255;
@@ -36,11 +58,11 @@ function _tintLayer(ctx, img, dx, dy, dw, dh, r, g, b) {
 }
 
 function _multiplyOverlay(ctx, img, dx, dy, dw, dh) {
-  const tmp  = createCanvas(dw, dh);
+  const tmp = createCanvas(dw, dh);
   tmp.getContext('2d').drawImage(img, 0, 0, 256, 256, 0, 0, dw, dh);
-  const ov   = tmp.getContext('2d').getImageData(0, 0, dw, dh).data;
-  const cId  = ctx.getImageData(dx, dy, dw, dh);
-  const cv   = cId.data;
+  const ov  = tmp.getContext('2d').getImageData(0, 0, dw, dh).data;
+  const cId = ctx.getImageData(dx, dy, dw, dh);
+  const cv  = cId.data;
   for (let i = 0; i < ov.length; i += 4) {
     const a = ov[i + 3] / 255;
     if (a > 0) {
@@ -55,11 +77,12 @@ function _multiplyOverlay(ctx, img, dx, dy, dw, dh) {
   ctx.putImageData(cId, dx, dy);
 }
 
-async function renderFrog(canvas, colorId, patternId, genusId) {
-  const isGlass  = colorId   === 22;
-  const isChroma = patternId === 15;
-  const [, cr, cg, cb] = COLORS[colorId]          || [null, 128, 128, 128];
-  const [, pr, pg, pb] = PATTERN_COLORS[patternId] || [null, 128, 128, 128];
+// patternRgbOverride: [r, g, b] replaces PATTERN_COLORS[patternId] for this render
+async function renderFrog(canvas, colorId, patternId, genusId, patternRgbOverride) {
+  const isGlass = colorId === 22;
+  const [, cr, cg, cb]   = COLORS[colorId]          || [null, 128, 128, 128];
+  const [, pr0, pg0, pb0] = PATTERN_COLORS[patternId] || [null, 128, 128, 128];
+  const [pr, pg, pb]      = patternRgbOverride || [pr0, pg0, pb0];
   const w = canvas.width, h = canvas.height;
   const ctx = canvas.getContext('2d');
 
@@ -71,9 +94,7 @@ async function renderFrog(canvas, colorId, patternId, genusId) {
 
   ctx.clearRect(0, 0, w, h);
   _tintLayer(ctx, baseImg,  0, 0, w, h, cr, cg, cb);
-  // Chroma: use a fixed red hue for the static OG image
-  const [effPr, effPg, effPb] = isChroma ? [255, 30, 30] : [pr, pg, pb];
-  _tintLayer(ctx, genusImg, 0, 0, w, h, effPr, effPg, effPb);
+  _tintLayer(ctx, genusImg, 0, 0, w, h, pr, pg, pb);
   _multiplyOverlay(ctx, ovImg, 0, 0, w, h);
 
   if (isGlass) {
@@ -109,6 +130,7 @@ function drawBackground(ctx, w, h, diagonal = false, r = 28) {
   ctx.fill();
 }
 
+
 // ── Sets cache (warm between requests) ────────────────────────────────────────
 let _setsCache = null;
 function getSets() {
@@ -118,6 +140,7 @@ function getSets() {
   }
   return _setsCache;
 }
+
 
 // ── Fallback: stream the static embed banner ──────────────────────────────────
 function serveBanner(res) {
@@ -130,24 +153,23 @@ function serveBanner(res) {
   }
 }
 
+
+// ── GIF encoder factory ───────────────────────────────────────────────────────
+function makeEncoder(w, h) {
+  const enc = new GIFEncoder(w, h);
+  enc.setDelay(GIF_DELAY);
+  enc.setRepeat(0); // loop forever
+  enc.start();
+  return enc;
+}
+
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
-  let { frog, set, builder, name, transparent, random } = req.query || {};
+  const { frog, set, builder, name, transparent } = req.query || {};
   const noBg = transparent !== undefined;
 
-  // Resolve ?random=frog / ?random=set into concrete values
-  if (random === 'frog') {
-    frog = `${Math.floor(Math.random() * COLORS.length)}-` +
-           `${Math.floor(Math.random() * PATTERN_COLORS.length)}-` +
-           `${Math.floor(Math.random() * GENERA.length)}`;
-  } else if (random === 'set') {
-    const sets = getSets();
-    if (sets.length) set = String(sets[Math.floor(Math.random() * sets.length)].code);
-  }
-
-  res.setHeader('Content-Type', 'image/png');
-  res.setHeader('Cache-Control',
-    random !== undefined ? 'no-store' : 'public, max-age=604800, stale-while-revalidate=86400');
+  res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
 
   try {
     // ── Single frog card ──────────────────────────────────────────────────────
@@ -157,37 +179,55 @@ module.exports = async (req, res) => {
         return serveBanner(res);
       }
 
-      const SIZE   = 512, PAD = 48;
-      const out    = createCanvas(SIZE + PAD * 2, SIZE + PAD * 2);
-      const ctx    = out.getContext('2d');
+      const SIZE = 512, PAD = 48;
+      const W = SIZE + PAD * 2, H = SIZE + PAD * 2;
 
-      if (!noBg) {
-        const bgImg = await loadImage(FROGBG_PATH);
-        ctx.drawImage(bgImg, 0, 0, out.width, out.height);
+      if (p === CHROMA_ID) {
+        // ── Animated GIF: cycle hue through the Chroma pattern layer ──────────
+        const bgImg = noBg ? null : await loadImage(FROGBG_PATH);
+        const enc   = makeEncoder(W, H);
+
+        for (let f = 0; f < GIF_FRAMES; f++) {
+          const hue = (f / GIF_FRAMES) * 360;
+          const rgb = hslToRgb(hue, 1.0, 0.55);
+          const out = createCanvas(W, H);
+          const ctx = out.getContext('2d');
+          if (bgImg) ctx.drawImage(bgImg, 0, 0, W, H);
+          const frogCv = createCanvas(SIZE, SIZE);
+          await renderFrog(frogCv, c, p, g, rgb);
+          ctx.drawImage(frogCv, PAD, PAD);
+          enc.addFrame(ctx);
+        }
+
+        enc.finish();
+        res.setHeader('Content-Type', 'image/gif');
+        res.end(Buffer.from(enc.out.getData()));
+      } else {
+        // ── Static PNG ────────────────────────────────────────────────────────
+        const out = createCanvas(W, H);
+        const ctx = out.getContext('2d');
+        if (!noBg) {
+          const bgImg = await loadImage(FROGBG_PATH);
+          ctx.drawImage(bgImg, 0, 0, W, H);
+        }
+        const frogCv = createCanvas(SIZE, SIZE);
+        await renderFrog(frogCv, c, p, g);
+        ctx.drawImage(frogCv, PAD, PAD);
+        res.setHeader('Content-Type', 'image/png');
+        res.end(out.toBuffer('image/png'));
       }
-
-      const frogCv = createCanvas(SIZE, SIZE);
-      await renderFrog(frogCv, c, p, g);
-      ctx.drawImage(frogCv, PAD, PAD);
-
-      res.end(out.toBuffer('image/png'));
       return;
     }
 
     // ── Set card (weekly or custom builder) ───────────────────────────────────
     if (set || builder) {
-      let setName  = name || 'Custom Set';
-      let rawFrogs = [];           // [[count, colorId, patternId, genusId], ...]
-      let weekCode = null;
+      let rawFrogs = []; // [[count, colorId, patternId, genusId], ...]
 
       if (set) {
-        weekCode     = set;
-        const found  = getSets().find(s => String(s.code) === String(set));
-        if (!found)  return serveBanner(res);
-        setName      = found.name;
-        rawFrogs     = found.frogs;
+        const found = getSets().find(s => String(s.code) === String(set));
+        if (!found) return serveBanner(res);
+        rawFrogs = found.frogs;
       } else {
-        // Custom builder data: "count:c:p:g,..."
         builder.split(',').forEach(part => {
           const segs = part.trim().split(':');
           if (segs.length === 4) {
@@ -197,31 +237,70 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Expand counts into individual frog canvases
-      const FROG_SIZE = 160, OVERLAP = 44;
-      const frogCanvases = [];
+      // Expand counts into [colorId, patternId, genusId] per slot
+      const slots = [];
       for (const [count, colorId, patternId, genusId] of rawFrogs) {
-        for (let n = 0; n < count; n++) {
-          const fc = createCanvas(FROG_SIZE, FROG_SIZE);
-          await renderFrog(fc, colorId, patternId, genusId);
-          frogCanvases.push(fc);
-        }
+        for (let n = 0; n < count; n++) slots.push([colorId, patternId, genusId]);
       }
-      if (!frogCanvases.length) return serveBanner(res);
+      if (!slots.length) return serveBanner(res);
 
-      const STEP   = FROG_SIZE - OVERLAP;
-      const totalW = frogCanvases.length * STEP + OVERLAP; // = N*STEP + leftover
-      const H_PAD  = 28, V_PAD = 20;
-      const out    = createCanvas(totalW + H_PAD * 2, FROG_SIZE + V_PAD * 2);
-      const ctx    = out.getContext('2d');
-      const pill   = Math.floor(out.height / 2);
+      const FROG_SIZE = 160, OVERLAP = 44, STEP = FROG_SIZE - OVERLAP;
+      const H_PAD = 28, V_PAD = 20;
+      const totalW = slots.length * STEP + OVERLAP;
+      const W = totalW + H_PAD * 2, H = FROG_SIZE + V_PAD * 2;
+      const pill = Math.floor(H / 2);
 
-      if (!noBg) drawBackground(ctx, out.width, out.height, false, pill);
-      // Draw right-to-left so leftmost frog sits on top
-      for (let i = frogCanvases.length - 1; i >= 0; i--)
-        ctx.drawImage(frogCanvases[i], H_PAD + i * STEP, V_PAD);
+      const hasChroma = slots.some(([, p]) => p === CHROMA_ID);
 
-      res.end(out.toBuffer('image/png'));
+      if (hasChroma) {
+        // ── Animated GIF ──────────────────────────────────────────────────────
+        // Pre-render static (non-Chroma) frogs once; Chroma frogs re-render per frame
+        const staticCanvases = await Promise.all(slots.map(([c, p, g]) => {
+          if (p === CHROMA_ID) return Promise.resolve(null); // placeholder
+          const fc = createCanvas(FROG_SIZE, FROG_SIZE);
+          return renderFrog(fc, c, p, g).then(() => fc);
+        }));
+
+        const enc = makeEncoder(W, H);
+
+        for (let f = 0; f < GIF_FRAMES; f++) {
+          const hue = (f / GIF_FRAMES) * 360;
+          const rgb = hslToRgb(hue, 1.0, 0.55);
+
+          // Render Chroma frogs for this frame
+          const frameCanvases = await Promise.all(slots.map(([c, p, g], i) => {
+            if (p !== CHROMA_ID) return Promise.resolve(staticCanvases[i]);
+            const fc = createCanvas(FROG_SIZE, FROG_SIZE);
+            return renderFrog(fc, c, p, g, rgb).then(() => fc);
+          }));
+
+          const out = createCanvas(W, H);
+          const ctx = out.getContext('2d');
+          if (!noBg) drawBackground(ctx, W, H, false, pill);
+          // Right-to-left so leftmost frog is on top
+          for (let i = slots.length - 1; i >= 0; i--)
+            ctx.drawImage(frameCanvases[i], H_PAD + i * STEP, V_PAD);
+
+          enc.addFrame(ctx);
+        }
+
+        enc.finish();
+        res.setHeader('Content-Type', 'image/gif');
+        res.end(Buffer.from(enc.out.getData()));
+      } else {
+        // ── Static PNG ────────────────────────────────────────────────────────
+        const out = createCanvas(W, H);
+        const ctx = out.getContext('2d');
+        if (!noBg) drawBackground(ctx, W, H, false, pill);
+        const frogCanvases = await Promise.all(slots.map(([c, p, g]) => {
+          const fc = createCanvas(FROG_SIZE, FROG_SIZE);
+          return renderFrog(fc, c, p, g).then(() => fc);
+        }));
+        for (let i = slots.length - 1; i >= 0; i--)
+          ctx.drawImage(frogCanvases[i], H_PAD + i * STEP, V_PAD);
+        res.setHeader('Content-Type', 'image/png');
+        res.end(out.toBuffer('image/png'));
+      }
       return;
     }
 
