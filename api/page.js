@@ -46,15 +46,16 @@ module.exports = (req, res) => {
 
   if (random !== undefined) {
     noCache = true;
+    const bust = Date.now();
     if (reqPath === '/frog') {
       ogTitle = 'Random Frog — Splashdex';
       ogDesc  = 'A surprise Pocket Frogs frog · Splashdex';
-      ogImage = `${BASE}/api/og?random=frog${tSuffix}`;
+      ogImage = `${BASE}/api/og?random=frog&t=${bust}${tSuffix}`;
       ogUrl   = `${BASE}/frog?random`;
     } else if (reqPath === '/set') {
       ogTitle = 'Random Set — Splashdex';
       ogDesc  = 'A surprise Pocket Frogs weekly set · Splashdex';
-      ogImage = `${BASE}/api/og?random=set${tSuffix}`;
+      ogImage = `${BASE}/api/og?random=set&t=${bust}${tSuffix}`;
       ogUrl   = `${BASE}/set?random`;
     }
   } else if (frog) {
