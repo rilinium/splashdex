@@ -14,7 +14,7 @@ const SETS_PATH    = path.join(__dirname, '..', 'sets.txt');
 
 const CHROMA_ID  = 15;
 const GIF_FRAMES = 16;
-const GIF_DELAY  = 80; // ms per frame → 1.28 s full cycle
+const GIF_DELAY  = 160; // ms per frame → 2.56 s full cycle
 
 
 // ── Sprite cache (warm across invocations in the same Lambda instance) ────────
@@ -93,16 +93,11 @@ async function renderFrog(canvas, colorId, patternId, genusId, patternRgbOverrid
   ]);
 
   ctx.clearRect(0, 0, w, h);
+  if (isGlass) ctx.globalAlpha = 0.5;
   _tintLayer(ctx, baseImg,  0, 0, w, h, cr, cg, cb);
+  ctx.globalAlpha = 1.0;
   _tintLayer(ctx, genusImg, 0, 0, w, h, pr, pg, pb);
   _multiplyOverlay(ctx, ovImg, 0, 0, w, h);
-
-  if (isGlass) {
-    const id = ctx.getImageData(0, 0, w, h);
-    const d  = id.data;
-    for (let i = 3; i < d.length; i += 4) d[i] = (d[i] * 0.5) | 0;
-    ctx.putImageData(id, 0, 0);
-  }
 }
 
 function roundRectPath(ctx, x, y, w, h, r) {

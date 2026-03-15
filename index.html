@@ -897,14 +897,15 @@ function _renderChromaFrame(entry) {
   const { ctx, baseImg, genusImg, ovImg, cr, cg, cb, w, h, isGlass } = entry;
   const [pr, pg, pb] = hsvToRgb(chromaHue, 1, 1);
   ctx.clearRect(0, 0, w, h);
+  if (isGlass) ctx.globalAlpha = 0.5;
   _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, w, h, cr, cg, cb);
+  ctx.globalAlpha = 1.0;
   _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
   _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
-  if (isGlass) _applyGlassEffect(ctx, w, h);
 }
 
 function animateChroma() {
-  chromaHue = (chromaHue + 0.004) % 1;
+  chromaHue = (chromaHue + 0.002) % 1;
   chromaCanvases.forEach((entry, canvas) => {
     if (!document.contains(canvas)) { chromaCanvases.delete(canvas); return; }
     _renderChromaFrame(entry);
@@ -946,10 +947,11 @@ function renderFrog(canvas, colorId, patternId, genusId) {
     } else {
       chromaCanvases.delete(canvas);
       ctx.clearRect(0, 0, w, h);
+      if (isGlass) ctx.globalAlpha = 0.5;
       _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, w, h, cr, cg, cb);
+      ctx.globalAlpha = 1.0;
       _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
       _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
-      if (isGlass) _applyGlassEffect(ctx, w, h);
     }
   }).catch(() => _drawFrogPlaceholder(canvas));
 }
@@ -2046,16 +2048,18 @@ function _renderFrogOffscreen(colorId, patternId, genusId, size) {
     loadSprite('overlay_256.png'),
   ]).then(([baseImg, genusImg, ovImg]) => {
     ctx.clearRect(0, 0, size, size);
+    if (isGlass) ctx.globalAlpha = 0.5;
     if (isChroma) {
       const [pr2, pg2, pb2] = hsvToRgb(chromaHue, 1, 1);
       _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, size, size, cr, cg, cb);
+      ctx.globalAlpha = 1.0;
       _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, size, size, pr2, pg2, pb2);
     } else {
       _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, size, size, cr, cg, cb);
+      ctx.globalAlpha = 1.0;
       _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, size, size, pr, pg, pb);
     }
     _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, size, size);
-    if (isGlass) _applyGlassEffect(ctx, size, size);
     return canvas;
   });
 }
