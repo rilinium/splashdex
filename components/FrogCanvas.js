@@ -45,5 +45,7 @@ export default function FrogCanvas({
     return () => observer.disconnect();
   }, [colorId, patternId, genusId, observe, doRender, chromaCanvasesRef]);
 
-  return <canvas ref={canvasRef} width={size} height={size} style={{ width: size, height: size }} />;
+  // Do NOT put width/height as JSX props — React would reset canvas.width on every
+  // re-render, clearing the buffer. Canvas buffer sizing is handled entirely by renderFrog.
+  return <canvas ref={canvasRef} style={{ width: size, height: size, display: 'block' }} />;
 }
