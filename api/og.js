@@ -98,16 +98,6 @@ async function renderFrog(canvas, colorId, patternId, genusId, patternRgbOverrid
   ctx.globalAlpha = 1.0;
   _tintLayer(ctx, genusImg, 0, 0, w, h, pr, pg, pb);
   _multiplyOverlay(ctx, ovImg, 0, 0, w, h);
-  // Boost alpha of very-bright pixels (eye whites) that the overlay lifted to near-white
-  // but that landed on base-layer pixels with alpha=127 due to glass transparency.
-  if (isGlass) {
-    const id = ctx.getImageData(0, 0, w, h);
-    const d  = id.data;
-    for (let i = 0; i < d.length; i += 4) {
-      if (d[i+3] > 0 && (d[i] + d[i+1] + d[i+2]) / 3 > 200) d[i+3] = 255;
-    }
-    ctx.putImageData(id, 0, 0);
-  }
 }
 
 function roundRectPath(ctx, x, y, w, h, r) {

@@ -893,17 +893,6 @@ function hsvToRgb(h, s, v) {
 const chromaCanvases = new Map();
 let chromaHue = 0;
 
-// For glass frogs: base is drawn at 0.5 alpha, so eye-white pixels (very bright
-// after the hard-light overlay) end up semi-transparent. Boost them back to opaque.
-function _boostEyeAlpha(ctx, w, h) {
-  const id = ctx.getImageData(0, 0, w, h);
-  const d  = id.data;
-  for (let i = 0; i < d.length; i += 4) {
-    if (d[i+3] > 0 && (d[i] + d[i+1] + d[i+2]) / 3 > 200) d[i+3] = 255;
-  }
-  ctx.putImageData(id, 0, 0);
-}
-
 function _renderChromaFrame(entry) {
   const { ctx, baseImg, genusImg, ovImg, cr, cg, cb, w, h, isGlass } = entry;
   const [pr, pg, pb] = hsvToRgb(chromaHue, 1, 1);
@@ -913,7 +902,6 @@ function _renderChromaFrame(entry) {
   ctx.globalAlpha = 1.0;
   _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
   _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
-  if (isGlass) _boostEyeAlpha(ctx, w, h);
 }
 
 function animateChroma() {
@@ -964,7 +952,6 @@ function renderFrog(canvas, colorId, patternId, genusId) {
       ctx.globalAlpha = 1.0;
       _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
       _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
-      if (isGlass) _boostEyeAlpha(ctx, w, h);
     }
   }).catch(() => _drawFrogPlaceholder(canvas));
 }
@@ -2067,7 +2054,6 @@ function _renderFrogOffscreen(colorId, patternId, genusId, size) {
     ctx.globalAlpha = 1.0;
     _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, size, size, effPr, effPg, effPb);
     _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, size, size);
-    if (isGlass) _boostEyeAlpha(ctx, size, size);
     return canvas;
   });
 }
