@@ -1,21 +1,10 @@
 {
+  "framework": "nextjs",
   "functions": {
     "api/og.js": {
       "includeFiles": "frog_sprites/**,embedbanner.png,embedfrogbg.png,sets.txt",
       "memory": 1024,
       "maxDuration": 30
-    },
-    "api/page.js": {
-      "includeFiles": "index.html,sets.txt"
-    },
-    "api/stats.js": {
-      "includeFiles": "sets.txt"
     }
-  },
-  "routes": [
-    { "src": "^/stats$", "dest": "/api/stats" },
-    { "src": "^/(frog|breeds|set|customset)$", "dest": "/api/page" },
-    { "src": "^/$", "dest": "/api/page" },
-    { "handle": "filesystem" }
-  ]
+  }
 }
