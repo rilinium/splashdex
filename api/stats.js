@@ -229,6 +229,7 @@ module.exports = (req, res) => {
     </div>
   </div>
 
+  <script defer src="/_vercel/insights/script.js"></script>
   <footer>
     <a href="https://github.com/rilinium/splashdex" target="_blank" rel="noopener">GitHub</a>
     · Splashdex is a fan site, not affiliated with Nimblebit.
