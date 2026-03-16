@@ -92,12 +92,20 @@ async function renderFrog(canvas, colorId, patternId, genusId, patternRgbOverrid
     getSprite('overlay_256.png'),
   ]);
 
-  ctx.clearRect(0, 0, w, h);
-  if (isGlass) ctx.globalAlpha = 0.5;
-  _tintLayer(ctx, baseImg,  0, 0, w, h, cr, cg, cb);
-  ctx.globalAlpha = 1.0;
-  _tintLayer(ctx, genusImg, 0, 0, w, h, pr, pg, pb);
-  _multiplyOverlay(ctx, ovImg, 0, 0, w, h);
+  // For glass: render the full frog at full opacity onto a temp canvas,
+  // then composite the result at 0.5 alpha so eyes/overlay stay crisp.
+  const target = isGlass ? createCanvas(w, h) : canvas;
+  const tCtx   = target.getContext('2d');
+  tCtx.clearRect(0, 0, w, h);
+  _tintLayer(tCtx, baseImg,  0, 0, w, h, cr, cg, cb);
+  _tintLayer(tCtx, genusImg, 0, 0, w, h, pr, pg, pb);
+  _multiplyOverlay(tCtx, ovImg, 0, 0, w, h);
+  if (isGlass) {
+    ctx.clearRect(0, 0, w, h);
+    ctx.globalAlpha = 0.5;
+    ctx.drawImage(target, 0, 0);
+    ctx.globalAlpha = 1.0;
+  }
 }
 
 function roundRectPath(ctx, x, y, w, h, r) {
