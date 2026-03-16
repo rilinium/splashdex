@@ -1,4 +1,3 @@
-# Splashdex Rendering Notes
 ![Splashdex logo](embedbanner.png)
 ![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Frilinium%2Fsplashdex&label=Hits&icon=github&color=%23e685b5&message=&style=for-the-badge&tz=UTC)
 
