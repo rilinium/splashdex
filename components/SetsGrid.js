@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { frogFullName, parseWeekCode } from '@/lib/gameHelpers';
-import { useChromaAnimation } from '@/hooks/useChromaAnimation';
+import { useChromaSync } from '@/hooks/useChromaSync';
 import FrogCanvas from '@/components/FrogCanvas';
 
 function roundRectPath(ctx, x, y, w, h, r) {
@@ -25,23 +25,12 @@ function safeFilename(name) {
 
 export default function SetsGrid({ initialSets, initialSetCode }) {
   const router = useRouter();
-  const hueRef = useChromaAnimation();
-  const chromaCanvasesRef = useRef(new Map());
+  const chromaCanvasesRef = useChromaSync();
 
   const [query,    setQuery]    = useState('');
   const [sort,     setSort]     = useState('newest');
   const [viewMode, setViewMode] = useState('card');
 
-  // RAF loop to re-render Chroma canvases
-  useEffect(() => {
-    let raf;
-    const tick = () => {
-      chromaCanvasesRef.current.forEach(renderFn => renderFn());
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
 
   // Deep-link scroll
   useEffect(() => {
@@ -214,7 +203,7 @@ function SetCard({ set, router, hueRef, chromaCanvasesRef, onExport }) {
                   patternId={patternId}
                   genusId={genusId}
                   size={56}
-                  chromaHueRef={patternId === 15 ? hueRef : null}
+
                   chromaCanvasesRef={patternId === 15 ? chromaCanvasesRef : null}
                   observe={patternId !== 15}
                 />
@@ -257,7 +246,7 @@ function GameStrip({ set, router, hueRef, chromaCanvasesRef, onExport }) {
                 patternId={patternId}
                 genusId={genusId}
                 size={88}
-                chromaHueRef={patternId === 15 ? hueRef : null}
+
                 chromaCanvasesRef={patternId === 15 ? chromaCanvasesRef : null}
                 observe={patternId !== 15}
               />

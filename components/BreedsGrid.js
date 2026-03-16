@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   COLORS, PATTERNS, GENERA,
@@ -7,35 +7,23 @@ import {
   BREEDS_PER_PAGE,
 } from '@/lib/gameData';
 import { frogFullName, fdexBit } from '@/lib/gameHelpers';
-import { useChromaAnimation } from '@/hooks/useChromaAnimation';
 import FrogCanvas from '@/components/FrogCanvas';
+import { useChromaSync } from '@/hooks/useChromaSync';
 import { useSettings } from '@/contexts/SettingsContext';
 
 const GRID_MIN = { small: '100px', medium: '130px', large: '170px' };
 
 export default function BreedsGrid({ initialColor, initialPattern, initialGenus }) {
   const router = useRouter();
-  const hueRef = useChromaAnimation();
-  const chromaCanvasesRef = useRef(new Map());
   const { settings } = useSettings();
+  const chromaCanvasesRef = useChromaSync();
 
-  const [query,      setQuery]      = useState('');
-  const [colorF,     setColorF]     = useState(initialColor ?? '');
-  const [patternF,   setPatternF]   = useState(initialPattern ?? '');
-  const [genusF,     setGenusF]     = useState(initialGenus ?? '');
-  const [page,       setPage]       = useState(0);
-  const [inited,     setInited]     = useState(false);
-
-  // RAF loop to re-render Chroma canvases
-  useEffect(() => {
-    let raf;
-    const tick = () => {
-      chromaCanvasesRef.current.forEach(renderFn => renderFn());
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
+  const [query,    setQuery]    = useState('');
+  const [colorF,   setColorF]   = useState(initialColor   ?? '');
+  const [patternF, setPatternF] = useState(initialPattern ?? '');
+  const [genusF,   setGenusF]   = useState(initialGenus   ?? '');
+  const [page,     setPage]     = useState(0);
+  const [inited,   setInited]   = useState(false);
 
   // Initialize from URL on mount; fall back to saved defaults if no URL params
   useEffect(() => {
@@ -180,7 +168,6 @@ export default function BreedsGrid({ initialColor, initialPattern, initialGenus 
                 patternId={p}
                 genusId={g}
                 size={72}
-                chromaHueRef={p === 15 ? hueRef : null}
                 chromaCanvasesRef={p === 15 ? chromaCanvasesRef : null}
                 observe={p !== 15}
               />

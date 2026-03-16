@@ -4,27 +4,27 @@ import { useRef, useEffect, useCallback } from 'react';
 export default function FrogCanvas({
   colorId, patternId, genusId,
   size = 72,
-  chromaHueRef = null,
-  chromaCanvasesRef = null,
+  chromaCanvasesRef = null,  // Map<canvas → params> owned by BreedsGrid
   observe = false,
 }) {
   const canvasRef = useRef(null);
 
+  // One-shot async render — loads sprites into _imgCache so renderFrogSync can run later
   const doRender = useCallback(async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const { renderFrog } = await import('@/lib/renderEngine');
-    const hue = chromaHueRef ? chromaHueRef.current : 0;
-    await renderFrog(canvas, colorId, patternId, genusId, hue);
-  }, [colorId, patternId, genusId, chromaHueRef]);
+    await renderFrog(canvas, colorId, patternId, genusId, 0);
+  }, [colorId, patternId, genusId]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     if (patternId === 15 && chromaCanvasesRef) {
-      chromaCanvasesRef.current.set(canvas, doRender);
-      doRender(); // initial render
+      // Register render params (not a function) — BreedsGrid RAF calls renderFrogSync directly
+      chromaCanvasesRef.current.set(canvas, { colorId, patternId, genusId });
+      doRender(); // initial render; also warms _imgCache / _gdCache for the sync path
       return () => { chromaCanvasesRef.current.delete(canvas); };
     }
 

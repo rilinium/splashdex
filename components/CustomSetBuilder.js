@@ -1,9 +1,9 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { COLORS, PATTERNS, GENERA, PATTERN_COLORS, COLOR_KEYS, PATTERN_KEYS, GENUS_KEYS } from '@/lib/gameData';
 import { frogFullName, toHex, parseWeekCode } from '@/lib/gameHelpers';
-import { useChromaAnimation } from '@/hooks/useChromaAnimation';
+import { useChromaSync } from '@/hooks/useChromaSync';
 import FrogCanvas from '@/components/FrogCanvas';
 
 function randomFrom(keys) {
@@ -36,8 +36,7 @@ function downloadDataUrl(dataUrl, filename) {
 
 export default function CustomSetBuilder({ initialBuilder, initialName }) {
   const router = useRouter();
-  const hueRef = useChromaAnimation();
-  const chromaCanvasesRef = useRef(new Map());
+  const chromaCanvasesRef = useChromaSync();
 
   const [setName,     setSetName]     = useState(initialName || '');
   const [sbFrogs,     setSbFrogs]     = useState([]); // [{colorId, patternId, genusId, count}]
@@ -51,16 +50,6 @@ export default function CustomSetBuilder({ initialBuilder, initialName }) {
   const [copyConfirm, setCopyConfirm] = useState(false);
   const [inited,      setInited]      = useState(false);
 
-  // RAF loop to re-render Chroma canvases
-  useEffect(() => {
-    let raf;
-    const tick = () => {
-      chromaCanvasesRef.current.forEach(renderFn => renderFn());
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
 
   // Initialize from prop
   useEffect(() => {
@@ -232,7 +221,7 @@ export default function CustomSetBuilder({ initialBuilder, initialName }) {
                     patternId={patternId}
                     genusId={genusId}
                     size={140}
-                    chromaHueRef={patternId === 15 ? hueRef : null}
+
                     chromaCanvasesRef={patternId === 15 ? chromaCanvasesRef : null}
                     observe={false}
                   />
@@ -340,7 +329,7 @@ export default function CustomSetBuilder({ initialBuilder, initialName }) {
                           patternId={p}
                           genusId={g}
                           size={56}
-                          chromaHueRef={p === 15 ? hueRef : null}
+
                           chromaCanvasesRef={p === 15 ? chromaCanvasesRef : null}
                           observe={false}
                         />
@@ -369,7 +358,7 @@ export default function CustomSetBuilder({ initialBuilder, initialName }) {
                           patternId={p}
                           genusId={g}
                           size={88}
-                          chromaHueRef={p === 15 ? hueRef : null}
+
                           chromaCanvasesRef={p === 15 ? chromaCanvasesRef : null}
                           observe={false}
                         />

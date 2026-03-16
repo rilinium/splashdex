@@ -1,9 +1,9 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { COLORS, PATTERNS, GENERA, PATTERN_COLORS, COLOR_KEYS, PATTERN_KEYS, GENUS_KEYS } from '@/lib/gameData';
 import { frogFullName, fdexBit, toHex } from '@/lib/gameHelpers';
-import { useChromaAnimation } from '@/hooks/useChromaAnimation';
+import { useChromaSync } from '@/hooks/useChromaSync';
 import FrogCanvas from '@/components/FrogCanvas';
 
 function randomFrom(keys) {
@@ -30,24 +30,13 @@ function safeFilename(name) {
 
 export default function FrogBuilder({ initialFrog }) {
   const router = useRouter();
-  const hueRef = useChromaAnimation();
-  const chromaCanvasesRef = useRef(new Map());
+  const chromaCanvasesRef = useChromaSync();
 
   const [colorId,   setColorId]   = useState(null);
   const [patternId, setPatternId] = useState(null);
   const [genusId,   setGenusId]   = useState(null);
   const [inited,    setInited]    = useState(false);
 
-  // RAF loop to re-render Chroma canvases
-  useEffect(() => {
-    let raf;
-    const tick = () => {
-      chromaCanvasesRef.current.forEach(renderFn => renderFn());
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
 
   // Initialize from prop or randomize
   useEffect(() => {
@@ -161,7 +150,7 @@ export default function FrogBuilder({ initialFrog }) {
                 patternId={patternId}
                 genusId={genusId}
                 size={280}
-                chromaHueRef={hueRef}
+
                 chromaCanvasesRef={chromaCanvasesRef}
                 observe={false}
               />
@@ -221,7 +210,7 @@ export default function FrogBuilder({ initialFrog }) {
                   patternId={patternId}
                   genusId={genusId}
                   size={56}
-                  chromaHueRef={hueRef}
+  
                   chromaCanvasesRef={chromaCanvasesRef}
                   observe={false}
                 />
