@@ -215,15 +215,26 @@ export default function FrogBuilder({ initialFrog }) {
 
             <div className="form-group">
               <label className="form-label">Genus</label>
-              <select
-                className="form-input"
-                value={genusId}
-                onChange={e => setGenusId(Number(e.target.value))}
-              >
-                {GENUS_KEYS.map(id => (
-                  <option key={id} value={id}>{GENERA[id]}</option>
-                ))}
-              </select>
+              <div className="genus-preview-row">
+                <FrogCanvas
+                  colorId={colorId}
+                  patternId={patternId}
+                  genusId={genusId}
+                  size={56}
+                  chromaHueRef={hueRef}
+                  chromaCanvasesRef={chromaCanvasesRef}
+                  observe={false}
+                />
+                <select
+                  className="form-input"
+                  value={genusId}
+                  onChange={e => setGenusId(Number(e.target.value))}
+                >
+                  {GENUS_KEYS.map(id => (
+                    <option key={id} value={id}>{GENERA[id]}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="btn-row">

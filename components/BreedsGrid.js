@@ -9,11 +9,15 @@ import {
 import { frogFullName, fdexBit } from '@/lib/gameHelpers';
 import { useChromaAnimation } from '@/hooks/useChromaAnimation';
 import FrogCanvas from '@/components/FrogCanvas';
+import { useSettings } from '@/contexts/SettingsContext';
+
+const GRID_MIN = { small: '100px', medium: '130px', large: '170px' };
 
 export default function BreedsGrid({ initialColor, initialPattern, initialGenus }) {
   const router = useRouter();
   const hueRef = useChromaAnimation();
   const chromaCanvasesRef = useRef(new Map());
+  const { settings } = useSettings();
 
   const [query,      setQuery]      = useState('');
   const [colorF,     setColorF]     = useState(initialColor ?? '');
@@ -33,13 +37,20 @@ export default function BreedsGrid({ initialColor, initialPattern, initialGenus 
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Initialize from URL on mount
+  // Initialize from URL on mount; fall back to saved defaults if no URL params
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const sp = new URLSearchParams(window.location.search);
-      if (sp.get('color'))   setColorF(sp.get('color'));
-      if (sp.get('pattern')) setPatternF(sp.get('pattern'));
-      if (sp.get('genus'))   setGenusF(sp.get('genus'));
+      const hasParams = sp.get('color') || sp.get('pattern') || sp.get('genus');
+      if (hasParams) {
+        if (sp.get('color'))   setColorF(sp.get('color'));
+        if (sp.get('pattern')) setPatternF(sp.get('pattern'));
+        if (sp.get('genus'))   setGenusF(sp.get('genus'));
+      } else {
+        if (settings.defaultColor)   setColorF(settings.defaultColor);
+        if (settings.defaultPattern) setPatternF(settings.defaultPattern);
+        if (settings.defaultGenus)   setGenusF(settings.defaultGenus);
+      }
     }
     setInited(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -153,7 +164,7 @@ export default function BreedsGrid({ initialColor, initialPattern, initialGenus 
         </div>
       </div>
 
-      <div className="species-grid">
+      <div className="species-grid" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${GRID_MIN[settings.gridDensity] || '130px'}, 1fr))` }}>
         {pageItems.map(([c, p, g]) => {
           const label = frogFullName(c, p, g);
           const dexId = fdexBit(c, p, g);

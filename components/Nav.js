@@ -7,17 +7,20 @@ const TABS = [
   { label: '📋 Set Builder',  href: '/customset' },
   { label: '📅 Weekly Sets',  href: '/set' },
   { label: '📊 Stats',        href: '/stats' },
+  { label: '⚙ Settings',      href: '/settings' },
 ];
 export default function Nav() {
   const pathname = usePathname();
   return (
     <nav className="tabs">
-      {TABS.map(t => (
-        <Link key={t.href} href={t.href}
-          className={'tab-btn' + (pathname.startsWith(t.href) ? ' active' : '')}>
-          {t.label}
-        </Link>
-      ))}
+      <div className="tabs-inner">
+        {TABS.map(t => (
+          <Link key={t.href} href={t.href}
+            className={'tab-btn' + (pathname.startsWith(t.href) ? ' active' : '')}>
+            {t.label}
+          </Link>
+        ))}
+      </div>
     </nav>
   );
 }
