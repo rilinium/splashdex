@@ -1,5 +1,5 @@
-/* ── Catppuccin Mocha ── */
-:root {
+/* ── Catppuccin Mocha (dark, default) ── */
+:root, [data-theme="mocha"] {
   --base:      #1e1e2e;
   --mantle:    #181825;
   --crust:     #11111b;
@@ -21,6 +21,32 @@
   --red:       #f38ba8;
   --mauve:     #cba6f7;
   --accent:    #cba6f7;
+}
+
+/* ── Catppuccin Latte (light) ── */
+[data-theme="latte"] {
+  --base:      #eff1f5;
+  --mantle:    #e6e9ef;
+  --crust:     #dce0e8;
+  --surface0:  #ccd0da;
+  --surface1:  #bcc0cc;
+  --surface2:  #acb0be;
+  --overlay0:  #9ca0b0;
+  --overlay1:  #8c8fa1;
+  --subtext0:  #6c6f85;
+  --subtext1:  #5c5f77;
+  --text:      #4c4f69;
+  --lavender:  #7287fd;
+  --blue:      #1e66f5;
+  --sapphire:  #209fb5;
+  --teal:      #179299;
+  --green:     #40a02b;
+  --yellow:    #df8e1d;
+  --peach:     #fe640b;
+  --red:       #d20f39;
+  --mauve:     #8839ef;
+  --accent:    #8839ef;
+  color-scheme: light;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -254,7 +280,7 @@ select.form-input option { background: var(--surface0); color: var(--text); }
 
 /* ── Game View ── */
 .set-game-strip {
-  background: linear-gradient(160deg, #38384e 0%, #1e1e2e 100%);
+  background: linear-gradient(160deg, var(--surface0) 0%, var(--base) 100%);
   border-radius: 20px;
   padding: 14px 16px 10px;
   display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -270,8 +296,8 @@ select.form-input option { background: var(--surface0); color: var(--text); }
   background: rgba(0,0,0,.5); border-radius: 3px; padding: 0 3px;
 }
 .set-game-label { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.set-game-name { font-size: 13px; color: rgba(205,214,244,.55); font-weight: 500; }
-.set-game-week { font-size: 10px; color: rgba(166,173,200,.35); }
+.set-game-name { font-size: 13px; color: color-mix(in srgb, var(--text) 55%, transparent); font-weight: 500; }
+.set-game-week { font-size: 10px; color: color-mix(in srgb, var(--subtext0) 35%, transparent); }
 
 /* ── View Toggle ── */
 .view-toggle { display: flex; gap: 3px; }

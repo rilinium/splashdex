@@ -1,11 +1,16 @@
 'use client';
-import { useSettings, ACCENTS } from '@/contexts/SettingsContext';
+import { useSettings, ACCENTS, LATTE_ACCENTS } from '@/contexts/SettingsContext';
 import { COLORS, PATTERNS, GENERA, COLOR_KEYS, PATTERN_KEYS, GENUS_KEYS } from '@/lib/gameData';
 
 const DENSITY_OPTIONS = [
   { value: 'small',  label: 'Small' },
   { value: 'medium', label: 'Medium' },
   { value: 'large',  label: 'Large' },
+];
+
+const THEME_OPTIONS = [
+  { value: 'mocha', label: '🌙 Mocha' },
+  { value: 'latte', label: '☀️ Latte' },
 ];
 
 const ACCENT_LABELS = {
@@ -15,6 +20,7 @@ const ACCENT_LABELS = {
 
 export default function SettingsPanel() {
   const { settings, setSetting } = useSettings();
+  const accentPalette = settings.theme === 'latte' ? LATTE_ACCENTS : ACCENTS;
 
   return (
     <div className="page-panel">
@@ -22,8 +28,27 @@ export default function SettingsPanel() {
       <div className="card">
         <div className="card-title">Display</div>
 
-        {/* Animation toggle */}
+        {/* Theme */}
         <div className="settings-row">
+          <div className="settings-row-label">
+            <span className="settings-label">Theme</span>
+            <span className="settings-hint">Catppuccin Mocha (dark) or Latte (light)</span>
+          </div>
+          <div className="segmented">
+            {THEME_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                className={'segmented-btn' + (settings.theme === opt.value ? ' active' : '')}
+                onClick={() => setSetting('theme', opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Animation toggle */}
+        <div className="settings-row" style={{ marginTop: 16 }}>
           <div className="settings-row-label">
             <span className="settings-label">Chroma animation</span>
             <span className="settings-hint">Animate rainbow-cycling frogs in the breeds grid</span>
@@ -64,7 +89,7 @@ export default function SettingsPanel() {
             <span className="settings-hint">Highlight color for active links and focus rings</span>
           </div>
           <div className="accent-swatches">
-            {Object.entries(ACCENTS).map(([key, hex]) => (
+            {Object.entries(accentPalette).map(([key, hex]) => (
               <button
                 key={key}
                 className={'accent-swatch' + (settings.accentColor === key ? ' active' : '')}

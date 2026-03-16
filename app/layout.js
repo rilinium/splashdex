@@ -36,7 +36,7 @@ export default function RootLayout({ children }) {
           <div className="hdr-version">
             splashdex by{' '}
             <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a>
-            {' · '}v2.0.0{' · '}
+            {' · '}v2.0.0 partiri{' · '}
             <span title="Splashdex is an unofficial fan tool and is not affiliated with Nimblebit LLC.">
               not affiliated with nimblebit
             </span>
