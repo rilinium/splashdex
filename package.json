@@ -1,10 +1,1 @@
-{
-  "name": "splashdex",
-  "version": "1.2.0",
-  "description": "Pocket Frogs breed reference, weekly sets, and frog builder",
-  "license": "MIT",
-  "dependencies": {
-    "@napi-rs/canvas": "^0.1.96",
-    "gif-encoder-2": "^1.0.5"
-  }
-}
+{"name":"splashdex","version":"2.0.0","private":true,"scripts":{"dev":"next dev","build":"next build","start":"next start"},"dependencies":{"next":"14.2.29","react":"^18","react-dom":"^18","next-pwa":"^5.6.0","@napi-rs/canvas":"^0.1.96","gif-encoder-2":"^1.0.5"},"devDependencies":{}}

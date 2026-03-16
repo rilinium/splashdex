@@ -1,0 +1,332 @@
+/* ── Catppuccin Mocha ── */
+:root {
+  --base:      #1e1e2e;
+  --mantle:    #181825;
+  --crust:     #11111b;
+  --surface0:  #313244;
+  --surface1:  #45475a;
+  --surface2:  #585b70;
+  --overlay0:  #6c7086;
+  --overlay1:  #7f849c;
+  --subtext0:  #a6adc8;
+  --subtext1:  #bac2de;
+  --text:      #cdd6f4;
+  --lavender:  #b4befe;
+  --blue:      #89b4fa;
+  --sapphire:  #74c7ec;
+  --teal:      #94e2d5;
+  --green:     #a6e3a1;
+  --yellow:    #f9e2af;
+  --peach:     #fab387;
+  --red:       #f38ba8;
+  --mauve:     #cba6f7;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--base);
+  color: var(--text);
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.hdr {
+  background: var(--mantle);
+  border-bottom: 1px solid var(--surface0);
+  padding: 12px 20px;
+  display: flex; align-items: center; gap: 12px;
+  flex-shrink: 0;
+}
+.hdr-logo { height: 28px; width: auto; }
+.hdr-sub { font-size: 11px; color: var(--subtext0); }
+.hdr-right { margin-left: auto; font-size: 11px; color: var(--overlay1); text-align: right; }
+.hdr-version { font-size: 10px; color: var(--overlay0); position: fixed; bottom: 8px; right: 10px; z-index: 100; }
+.hdr-version a { color: var(--overlay1); text-decoration: none; }
+.hdr-version a:hover { color: var(--subtext0); text-decoration: underline; }
+
+/* ── Tabs ── */
+.tabs {
+  background: var(--mantle);
+  border-bottom: 1px solid var(--surface0);
+  padding: 0 20px; display: flex; gap: 0;
+  flex-shrink: 0;
+}
+.tab-btn {
+  padding: 10px 20px; border: none; background: none;
+  color: var(--subtext0); cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: color .15s, border-color .15s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--mauve); border-bottom-color: var(--mauve); }
+
+/* ── Content ── */
+.content { flex: 1; overflow: auto; }
+.tab-panel { display: none; padding: 20px; max-width: 1100px; }
+.tab-panel.active { display: block; }
+
+/* ── Card ── */
+.card {
+  background: var(--mantle);
+  border: 1px solid var(--surface0);
+  border-radius: 8px; padding: 16px 18px; margin-bottom: 14px;
+}
+.card-title {
+  font-size: 11px; font-weight: 600; color: var(--subtext0);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px;
+}
+
+/* ── Buttons ── */
+.btn {
+  padding: 7px 16px; border-radius: 6px; cursor: pointer; border: none;
+  font-size: 13px; font-weight: 500;
+  transition: opacity .1s;
+}
+.btn:hover { opacity: .85; }
+.btn:active { opacity: .7; }
+.btn-primary { background: var(--green); color: var(--crust); }
+.btn-gold    { background: var(--yellow); color: var(--crust); }
+.btn-sm      { padding: 5px 12px; font-size: 12px; }
+
+/* ── Form inputs ── */
+.form-input {
+  background: var(--surface0); border: 1px solid var(--surface1);
+  border-radius: 6px; color: var(--text); padding: 7px 10px;
+  font-size: 13px; width: 100%;
+}
+.form-input:focus { outline: none; border-color: var(--mauve); }
+select.form-input { cursor: pointer; }
+select.form-input option { background: var(--surface0); color: var(--text); }
+
+/* ── Builder ── */
+.builder-layout { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.builder-preview {
+  flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.preview-canvas-wrap {
+  width: 192px; height: 192px;
+  background: var(--surface0);
+  border: 1px solid var(--surface1);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+#builder-canvas { image-rendering: auto; }
+.frog-name-display {
+  font-size: 14px; font-weight: 600; color: var(--text); text-align: center; min-height: 20px;
+}
+.frog-combo-display { font-size: 11px; color: var(--subtext0); text-align: center; }
+.builder-controls { flex: 1; min-width: 240px; }
+.form-group { margin-bottom: 12px; }
+.form-label {
+  display: block; font-size: 11px; font-weight: 600; color: var(--subtext0);
+  text-transform: uppercase; letter-spacing: .07em; margin-bottom: 5px;
+}
+.color-preview-row { display: flex; align-items: center; gap: 8px; }
+.color-dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--surface2); flex-shrink: 0; }
+.btn-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.dex-id-display {
+  font-size: 11px; color: var(--subtext0);
+  background: var(--surface0); border: 1px solid var(--surface1);
+  border-radius: 6px; padding: 6px 10px; margin-top: 10px;
+}
+.dex-id-display strong { color: var(--text); }
+
+/* ── Species grid ── */
+.species-toolbar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.breeds-search-row { display: flex; gap: 8px; align-items: center; }
+.breeds-filter-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.search-input {
+  background: var(--surface0); border: 1px solid var(--surface1);
+  border-radius: 6px; color: var(--text); padding: 7px 12px;
+  font-size: 13px; min-width: 200px; flex: 1;
+}
+.search-input:focus { outline: none; border-color: var(--mauve); }
+.search-input::placeholder { color: var(--overlay0); }
+.filter-select {
+  background: var(--surface0); border: 1px solid var(--surface1);
+  border-radius: 6px; color: var(--text); padding: 7px 10px;
+  font-size: 12px; cursor: pointer;
+}
+.filter-select option { background: var(--surface0); }
+.count-lbl { font-size: 12px; color: var(--overlay1); white-space: nowrap; }
+.species-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+}
+.species-card {
+  background: var(--mantle); border: 1px solid var(--surface0);
+  border-radius: 8px; padding: 10px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  cursor: pointer; transition: border-color .15s;
+}
+.species-card:hover { border-color: var(--mauve); }
+.species-canvas { image-rendering: auto; }
+.species-name { font-size: 11px; font-weight: 500; color: var(--text); text-align: center; line-height: 1.3; }
+.species-id { font-size: 10px; color: var(--overlay0); }
+.breeds-pagination {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; margin-top: 16px; flex-wrap: wrap;
+}
+.breeds-pagination .btn { min-width: 80px; }
+.breeds-page-lbl { font-size: 12px; color: var(--overlay1); white-space: nowrap; }
+
+/* ── Sets ── */
+.sets-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+.sets-grid { display: flex; flex-direction: column; gap: 10px; }
+.set-card { background: var(--mantle); border: 1px solid var(--surface0); border-radius: 8px; padding: 14px 16px; }
+.set-card-hdr { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.set-card-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.set-card-week {
+  font-size: 11px; color: var(--subtext0);
+  background: var(--surface0); border: 1px solid var(--surface1);
+  border-radius: 4px; padding: 2px 7px;
+}
+.set-frogs { display: flex; gap: 8px; flex-wrap: wrap; }
+.set-frog-tile {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: var(--surface0); border: 1px solid var(--surface1);
+  border-radius: 6px; padding: 8px 6px; min-width: 68px; cursor: pointer;
+  transition: border-color .15s;
+}
+.set-frog-tile:hover { border-color: var(--mauve); }
+.set-frog-name { font-size: 10px; color: var(--subtext0); text-align: center; line-height: 1.3; }
+.set-frog-count { font-size: 10px; font-weight: 700; color: var(--yellow); position: absolute; top: 4px; right: 4px; }
+.set-frog-wrap { position: relative; }
+.status-loading { color: var(--subtext0); font-size: 13px; padding: 20px 0; }
+.status-error {
+  color: var(--red); font-size: 13px; padding: 16px;
+  background: color-mix(in srgb, var(--red) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red) 25%, transparent);
+  border-radius: 6px;
+}
+.sets-note {
+  font-size: 11px; color: var(--subtext0);
+  margin-bottom: 12px; padding: 8px 12px;
+  background: var(--surface0); border-radius: 6px;
+  border-left: 2px solid var(--mauve);
+}
+.frog-thumb { image-rendering: auto; }
+
+/* ── Set Builder ── */
+.setbuilder-layout { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.setbuilder-picker { flex-shrink: 0; min-width: 260px; }
+.setbuilder-divider { border-top: 1px solid var(--surface0); margin: 14px 0; }
+.setbuilder-frog-selector { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.setbuilder-frog-controls { flex: 1; min-width: 200px; }
+.setbuilder-preview { flex: 1; min-width: 280px; }
+.sb-count-row { display: flex; align-items: center; gap: 10px; }
+.sb-count-display { font-size: 16px; font-weight: 700; color: var(--text); min-width: 28px; text-align: center; }
+.sb-empty-msg { color: var(--overlay0); font-size: 13px; font-style: italic; padding: 20px 0; }
+.sb-import-row { margin-top: 4px; }
+.sb-remove-btn {
+  position: absolute; top: 2px; right: 2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--red); color: var(--crust);
+  border: none; cursor: pointer; font-size: 10px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .15s; padding: 0;
+}
+.set-frog-tile:hover .sb-remove-btn { opacity: 1; }
+
+/* ── Game View ── */
+.set-game-strip {
+  background: linear-gradient(160deg, #38384e 0%, #1e1e2e 100%);
+  border-radius: 20px;
+  padding: 14px 16px 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  margin-bottom: 10px;
+}
+.set-game-frogs {
+  display: flex; gap: 3px; align-items: flex-end; justify-content: center; flex-wrap: wrap;
+}
+.set-game-frog-wrap { position: relative; }
+.set-game-frog-count {
+  position: absolute; bottom: 2px; right: 2px;
+  font-size: 9px; font-weight: 700; color: var(--yellow);
+  background: rgba(0,0,0,.5); border-radius: 3px; padding: 0 3px;
+}
+.set-game-label { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.set-game-name { font-size: 13px; color: rgba(205,214,244,.55); font-weight: 500; }
+.set-game-week { font-size: 10px; color: rgba(166,173,200,.35); }
+
+/* ── View Toggle ── */
+.view-toggle { display: flex; gap: 3px; }
+.view-toggle-btn {
+  padding: 5px 10px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--surface1); font-size: 12px;
+  background: var(--surface0); color: var(--subtext0);
+  transition: background .1s, color .1s;
+}
+.view-toggle-btn.active { background: var(--surface1); color: var(--text); }
+
+/* ── Export buttons ── */
+.set-export-row {
+  display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap;
+}
+.btn-export {
+  padding: 4px 10px; border-radius: 5px; cursor: pointer;
+  border: 1px solid var(--surface1);
+  background: var(--surface0); color: var(--subtext0);
+  font-size: 11px; font-weight: 500;
+  transition: background .1s, color .1s;
+}
+.btn-export:hover { background: var(--surface1); color: var(--text); }
+.btn-export:active { opacity: .7; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--surface2); }
+
+/* ── Mobile ── */
+@media (max-width: 600px) {
+  .hdr { padding: 10px 14px; gap: 8px; }
+  .hdr-logo { height: 22px; }
+  .hdr-right { display: none; }
+
+  .tabs { padding: 0 6px; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { padding: 10px 14px; font-size: 12px; white-space: nowrap; }
+
+  .tab-panel { padding: 14px 12px; }
+
+  .builder-layout { flex-direction: column; align-items: stretch; }
+  .builder-preview { align-items: center; }
+  .builder-controls { min-width: unset; }
+  .preview-canvas-wrap { width: 160px; height: 160px; align-self: center; }
+  #builder-canvas { width: 160px !important; height: 160px !important; }
+
+  .species-toolbar { gap: 6px; }
+  .breeds-search-row { width: 100%; }
+  .search-input { min-width: unset; width: 100%; flex: 1; }
+  .breeds-filter-row { width: 100%; gap: 6px; }
+  .breeds-filter-row .filter-select { flex: 1; min-width: 0; font-size: 12px; padding: 7px 6px; }
+  .breeds-filter-row .btn { flex-shrink: 0; }
+  .species-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; }
+  .species-card { padding: 8px 6px; }
+  .species-canvas { width: 60px !important; height: 60px !important; }
+
+  .sets-toolbar { gap: 6px; }
+  .set-card { padding: 10px 12px; }
+  .set-frog-tile { min-width: 56px; padding: 6px 4px; }
+
+  .hdr-version { font-size: 9px; bottom: 6px; right: 8px; }
+
+  .setbuilder-layout { flex-direction: column; }
+  .setbuilder-picker { min-width: unset; width: 100%; }
+  .setbuilder-frog-selector { flex-direction: column; align-items: center; }
+  .setbuilder-frog-controls { min-width: unset; width: 100%; }
+  .setbuilder-preview { min-width: unset; width: 100%; }
+}
+
+.page-panel { padding: 20px; max-width: 1100px; margin: 0 auto; }
+* { box-sizing: border-box; }
+a.tab-btn { text-decoration: none; }
