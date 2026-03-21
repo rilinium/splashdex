@@ -9,7 +9,7 @@
   <!-- Open Graph / Discord embed -->
   <meta property="og:type"        content="website">
   <meta property="og:title"       content="Splashdex">
-  <meta property="og:description" content="Pocket Frogs breed reference — 44,160 combinations, weekly sets, and frog builder.">
+  <meta property="og:description" content="Pocket Frogs breed reference — 44,528 combinations, weekly sets, and frog builder.">
   <meta property="og:image"       content="https://rilinium.github.io/splashdex/embedbanner.png">
   <meta property="og:url"         content="https://rilinium.github.io/splashdex/">
   <meta name="twitter:card"       content="summary_large_image">
@@ -351,8 +351,8 @@
 <header class="hdr">
   <img src="Splashdex.svg" alt="Splashdex" class="hdr-logo">
   <div class="hdr-right">
-    23 colors · 16 patterns · 120 genera<br>
-    44,160 total combinations
+    23 colors · 16 patterns · 121 genera<br>
+    44,528 total combinations
   </div>
 </header>
 <div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.3.0 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
@@ -687,6 +687,7 @@ const GENERA = {
   108:"Inverso",  109:"Exclamo",  110:"Imbris",   111:"Pompeius",
   112:"Conexus",  113:"Cerebrum", 114:"Garcius",  115:"Porto",
   116:"Florens",  117:"Topologia",118:"Losgann",  119:"Triquetra",
+  120:"Paschali",
 };
 
 // FROG_TYPES: typeId → [colorId, genusId, patternId, name]
@@ -1066,7 +1067,7 @@ function builderUpdate() {
   const bit = fdexBit(colorId, patternId, genusId);
   document.getElementById('builder-dexid').innerHTML =
     'Splashdex Index: <strong>#' + bit + '</strong>' +
-    (bit >= 44160 ? ' <span style="color:#ff8060">(out of range)</span>' : '');
+    (bit >= 44528 ? ' <span style="color:#ff8060">(out of range)</span>' : '');
 
   // Update color swatch dots
   const [,cr,cg,cb] = COLORS[colorId] || [null,128,128,128];
@@ -1235,7 +1236,7 @@ function renderSpeciesGrid() {
   const nextEl = document.getElementById('breeds-next');
 
   document.getElementById('species-count').textContent =
-    total.toLocaleString() + ' / 44,160 breeds';
+    total.toLocaleString() + ' / 44,528 breeds';
   pagEl.style.display = total > BREEDS_PER_PAGE ? '' : 'none';
   lblEl.textContent = 'Page ' + (breedsPage + 1) + ' of ' + totalPages;
   prevEl.disabled = breedsPage === 0;
