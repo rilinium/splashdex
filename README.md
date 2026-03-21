@@ -1,7 +1,7 @@
 ![Splashdex logo](embedbanner.png)
 ![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Frilinium%2Fsplashdex&label=Hits&icon=github&color=%23e685b5&message=&style=for-the-badge&tz=UTC)
 
-Pocket Frogs breed reference — 44,160 combinations, weekly sets, and frog builder. 
+Pocket Frogs resource — 44,528 combinations, weekly sets, and frog builder. 
 
 ## Rendering pipeline
 - **Layer order matters.** `renderFrog` always draws the grayscale `frog_base_256.png`, then the genus mask, then `overlay_256.png`. Each layer is retinted by drawing it into a tiny canvas, adjusting the pixel colors (base uses the `COLORS` table, genus uses `PATTERN_COLORS`) and painting that result into the preview canvas.
