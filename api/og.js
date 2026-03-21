@@ -99,9 +99,17 @@ async function renderFrog(canvas, colorId, patternId, genusId, patternRgbOverrid
   if (isGlass) ctx.globalAlpha = 0.5;
   _tintLayer(ctx, baseImg,  0, 0, w, h, cr, cg, cb);
   ctx.globalAlpha = 1.0;
-  _tintLayer(ctx, genusImg, 0, 0, w, h, pr, pg, pb);
-  if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
-  _multiplyOverlay(ctx, ovImg, 0, 0, w, h);
+  if (genusId === 115) {
+    // Porto: base → overlay → genus → extra
+    _multiplyOverlay(ctx, ovImg, 0, 0, w, h);
+    _tintLayer(ctx, genusImg, 0, 0, w, h, pr, pg, pb);
+    if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
+  } else {
+    // Normal / Florens / Triquetra: base → genus → extra → overlay
+    _tintLayer(ctx, genusImg, 0, 0, w, h, pr, pg, pb);
+    if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
+    _multiplyOverlay(ctx, ovImg, 0, 0, w, h);
+  }
 }
 
 function roundRectPath(ctx, x, y, w, h, r) {

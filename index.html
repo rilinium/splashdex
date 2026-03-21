@@ -897,15 +897,21 @@ const chromaCanvases = new Map();
 let chromaHue = 0;
 
 function _renderChromaFrame(entry) {
-  const { ctx, baseImg, genusImg, ovImg, extraImg, cr, cg, cb, w, h, isGlass } = entry;
+  const { ctx, baseImg, genusImg, ovImg, extraImg, genusId, cr, cg, cb, w, h, isGlass } = entry;
   const [pr, pg, pb] = hsvToRgb(chromaHue, 1, 1);
   ctx.clearRect(0, 0, w, h);
   if (isGlass) ctx.globalAlpha = 0.5;
   _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, w, h, cr, cg, cb);
   ctx.globalAlpha = 1.0;
-  _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
-  if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
-  _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
+  if (genusId === 115) {
+    _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
+    _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
+    if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
+  } else {
+    _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
+    if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
+    _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
+  }
 }
 
 function animateChroma() {
@@ -948,7 +954,7 @@ function renderFrog(canvas, colorId, patternId, genusId) {
   Promise.all(spritePromises).then(([baseImg, genusImg, ovImg, extraImg]) => {
     const ctx = canvas.getContext('2d');
     if (isChroma) {
-      chromaCanvases.set(canvas, { ctx, baseImg, genusImg, ovImg, extraImg, cr, cg, cb, w, h, isGlass });
+      chromaCanvases.set(canvas, { ctx, baseImg, genusImg, ovImg, extraImg, genusId, cr, cg, cb, w, h, isGlass });
       _renderChromaFrame(chromaCanvases.get(canvas));
     } else {
       chromaCanvases.delete(canvas);
@@ -956,9 +962,15 @@ function renderFrog(canvas, colorId, patternId, genusId) {
       if (isGlass) ctx.globalAlpha = 0.5;
       _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, w, h, cr, cg, cb);
       ctx.globalAlpha = 1.0;
-      _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
-      if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
-      _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
+      if (genusId === 115) {
+        _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
+        _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
+        if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
+      } else {
+        _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
+        if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
+        _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
+      }
     }
   }).catch(() => _drawFrogPlaceholder(canvas));
 }
@@ -2061,9 +2073,17 @@ function _renderFrogOffscreen(colorId, patternId, genusId, size) {
     if (isGlass) ctx.globalAlpha = 0.5;
     _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, size, size, cr, cg, cb);
     ctx.globalAlpha = 1.0;
-    _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, size, size, effPr, effPg, effPb);
-    if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, size, size);
-    _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, size, size);
+    if (genusId === 115) {
+      // Porto: base → overlay → genus → extra
+      _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, size, size);
+      _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, size, size, effPr, effPg, effPb);
+      if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, size, size);
+    } else {
+      // Normal / Florens / Triquetra: base → genus → extra → overlay
+      _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, size, size, effPr, effPg, effPb);
+      if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, size, size);
+      _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, size, size);
+    }
     return canvas;
   });
 }
