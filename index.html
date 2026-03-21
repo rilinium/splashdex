@@ -1291,6 +1291,34 @@ let setsCanvasObserver = null;
 let setsViewMode = 'card';
 const setsCanvasData = new WeakMap(); // canvas -> [colorId, patternId, genusId]
 
+// ── Throttled render queue (prevents mobile crash under game-mode load) ────────
+const _setsRenderQueue = [];
+let _setsRafPending = false;
+const _RENDERS_PER_FRAME = 3;
+
+function _enqueueSetsRender(canvas, colorId, patternId, genusId) {
+  _setsRenderQueue.push({ canvas, colorId, patternId, genusId });
+  if (!_setsRafPending) {
+    _setsRafPending = true;
+    requestAnimationFrame(_drainSetsQueue);
+  }
+}
+
+function _drainSetsQueue() {
+  let n = 0;
+  while (_setsRenderQueue.length && n < _RENDERS_PER_FRAME) {
+    const { canvas, colorId, patternId, genusId } = _setsRenderQueue.shift();
+    if (!document.contains(canvas)) continue;
+    renderFrog(canvas, colorId, patternId, genusId);
+    n++;
+  }
+  if (_setsRenderQueue.length) {
+    requestAnimationFrame(_drainSetsQueue);
+  } else {
+    _setsRafPending = false;
+  }
+}
+
 function setViewMode(mode) {
   setsViewMode = mode;
   document.querySelectorAll('.view-toggle-btn').forEach(b => {
@@ -1310,11 +1338,11 @@ function getSetsObserver() {
         if (!data) return;
         if (entry.isIntersecting) {
           if (!cv._setsRendered) {
-            renderFrog(cv, data[0], data[1], data[2]);
             cv._setsRendered = true;
+            _enqueueSetsRender(cv, data[0], data[1], data[2]);
           }
         } else if (cv._setsRendered) {
-          // Free pixel memory when scrolled far out of view
+          // Free pixel memory when scrolled out of view
           chromaCanvases.delete(cv);
           const ctx = cv.getContext('2d');
           ctx.clearRect(0, 0, cv.width, cv.height);
@@ -1322,7 +1350,7 @@ function getSetsObserver() {
           cv._setsRendered = false;
         }
       });
-    }, { rootMargin: '600px 0px' });
+    }, { rootMargin: '200px 0px' });
   }
   return setsCanvasObserver;
 }
@@ -1415,16 +1443,18 @@ function renderSetsGrid(sets) {
   const grid = document.getElementById('sets-grid');
   if (setsCanvasObserver) grid.querySelectorAll('canvas').forEach(cv => setsCanvasObserver.unobserve(cv));
   grid.querySelectorAll('canvas').forEach(cv => chromaCanvases.delete(cv));
+  _setsRenderQueue.length = 0; // cancel any pending renders from previous grid
   grid.innerHTML = '';
 
   if (!sets.length) return;
   const obs = getSetsObserver();
 
   const builder = setsViewMode === 'game' ? buildGameStrip : buildSetCard;
+  const batchSize = setsViewMode === 'game' ? 8 : 20;
   let i = 0;
   function insertBatch() {
     const frag = document.createDocumentFragment();
-    const end = Math.min(i + 20, sets.length);
+    const end = Math.min(i + batchSize, sets.length);
     for (; i < end; i++) frag.appendChild(builder(sets[i], obs));
     grid.appendChild(frag);
     if (i < sets.length) {
