@@ -355,7 +355,7 @@
     44,160 total combinations
   </div>
 </header>
-<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.2.0 anura · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
+<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.3.0 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
@@ -803,6 +803,9 @@ const FROG_TYPES = {
 // Sprite directory — adjust this if you move sprites elsewhere
 const SPRITES = 'frog_sprites/';
 
+// Genera that have an extra (third) layer that renders without tinting
+const EXTRA_LAYER_GENERA = new Set([115, 116, 119]);
+
 // ══════════════════════════════════════════════════════════════════════════════
 // Sprite Rendering Engine (ported from pf_editor_web.py)
 // ══════════════════════════════════════════════════════════════════════════════
@@ -894,13 +897,14 @@ const chromaCanvases = new Map();
 let chromaHue = 0;
 
 function _renderChromaFrame(entry) {
-  const { ctx, baseImg, genusImg, ovImg, cr, cg, cb, w, h, isGlass } = entry;
+  const { ctx, baseImg, genusImg, ovImg, extraImg, cr, cg, cb, w, h, isGlass } = entry;
   const [pr, pg, pb] = hsvToRgb(chromaHue, 1, 1);
   ctx.clearRect(0, 0, w, h);
   if (isGlass) ctx.globalAlpha = 0.5;
   _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, w, h, cr, cg, cb);
   ctx.globalAlpha = 1.0;
   _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
+  if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
   _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
 }
 
@@ -935,14 +939,16 @@ function renderFrog(canvas, colorId, patternId, genusId) {
   }
   const w = canvas.width, h = canvas.height;
 
-  Promise.all([
+  const spritePromises = [
     loadSprite('frog_base_256.png'),
     loadSprite('frog_' + genusId + '_256.png'),
     loadSprite('overlay_256.png'),
-  ]).then(([baseImg, genusImg, ovImg]) => {
+  ];
+  if (EXTRA_LAYER_GENERA.has(genusId)) spritePromises.push(loadSprite('frog_' + genusId + '_extra_256.png'));
+  Promise.all(spritePromises).then(([baseImg, genusImg, ovImg, extraImg]) => {
     const ctx = canvas.getContext('2d');
     if (isChroma) {
-      chromaCanvases.set(canvas, { ctx, baseImg, genusImg, ovImg, cr, cg, cb, w, h, isGlass });
+      chromaCanvases.set(canvas, { ctx, baseImg, genusImg, ovImg, extraImg, cr, cg, cb, w, h, isGlass });
       _renderChromaFrame(chromaCanvases.get(canvas));
     } else {
       chromaCanvases.delete(canvas);
@@ -951,6 +957,7 @@ function renderFrog(canvas, colorId, patternId, genusId) {
       _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, w, h, cr, cg, cb);
       ctx.globalAlpha = 1.0;
       _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
+      if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
       _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
     }
   }).catch(() => _drawFrogPlaceholder(canvas));
