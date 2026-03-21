@@ -654,12 +654,12 @@
       </select>
       <span class="count-lbl" id="scenery-count"></span>
     </div>
+    <div style="font-size:11px;color:var(--overlay1);margin-bottom:10px;">⭐ = +happiness bonus granted to frogs in the same habitat</div>
     <div class="scenery-grid" id="scenery-grid"></div>
     <div class="scenery-credit">
       Happiness, cost &amp; delivery data sourced from the
       <em>Pocket Frogs Habitat Tracker</em> spreadsheet by
-      <a href="https://discord.gg/D5nrUpv" target="_blank" rel="noopener">@kielasandros</a>
-      on Discord. Sprites extracted from the game by rilinium.
+      @kielasandros on Discord. Sprites extracted from the game by rilinium.
     </div>
   </div>
 
@@ -671,7 +671,7 @@ const _initialPath   = location.pathname;
 const _initialSearch = location.search;
 let   _builderInitDone = false;
 
-const _TAB_PATHS = { builder: '/frog', species: '/breeds', setbuilder: '/customset', sets: '/set' };
+const _TAB_PATHS = { builder: '/frog', species: '/breeds', setbuilder: '/customset', sets: '/set', scenery: '/scenery' };
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Game Data
@@ -2080,7 +2080,13 @@ function parseDeepLink() {
 
   // Helper: get tab button by tab name
   const _btn = n => document.querySelector('.tab-btn:nth-child(' +
-    ({ builder: 1, species: 2, setbuilder: 3, sets: 4 }[n]) + ')');
+    ({ builder: 1, species: 2, setbuilder: 3, sets: 4, scenery: 5 }[n]) + ')');
+
+  // ── Path: /scenery ────────────────────────────────────────────────────────
+  if (path === '/scenery') {
+    tab('scenery', _btn('scenery'), 'replace');
+    return;
+  }
 
   // ── Path: /breeds ─────────────────────────────────────────────────────────
   if (path === '/breeds') {
@@ -2577,10 +2583,11 @@ function filterScenery(q) {
 window.addEventListener('popstate', () => {
   const p = location.pathname;
   const _btn = n => document.querySelector('.tab-btn:nth-child(' +
-    ({ builder: 1, species: 2, setbuilder: 3, sets: 4 }[n]) + ')');
+    ({ builder: 1, species: 2, setbuilder: 3, sets: 4, scenery: 5 }[n]) + ')');
   if (p === '/breeds')    return tab('species',    _btn('species'),    'none');
   if (p === '/set')       return tab('sets',       _btn('sets'),       'none');
   if (p === '/customset') return tab('setbuilder', _btn('setbuilder'), 'none');
+  if (p === '/scenery')   return tab('scenery',    _btn('scenery'),    'none');
   tab('builder', _btn('builder'), 'none');
 });
 </script>
