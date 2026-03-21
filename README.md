@@ -5,8 +5,24 @@ Pocket Frogs breed reference — 44,160 combinations, weekly sets, and frog buil
 
 ## Rendering pipeline
 - **Layer order matters.** `renderFrog` always draws the grayscale `frog_base_256.png`, then the genus mask, then `overlay_256.png`. Each layer is retinted by drawing it into a tiny canvas, adjusting the pixel colors (base uses the `COLORS` table, genus uses `PATTERN_COLORS`) and painting that result into the preview canvas.
-- **Overlay blending adds depth.** `_multiplyOverlay` implements a manual multiply-style blend that mixes the overlay sprite‘s luminance with whatever is underneath, so the frog keeps the shadows/shininess from the art. When the chosen color is `Glass` (color index 22) the routine also applies `_applyGlassEffect`, which cuts the alpha values by half to reproduce transparency.
+- **Overlay blending adds depth.** `_multiplyOverlay` implements a manual multiply-style blend that mixes the overlay sprite’s luminance with whatever is underneath, so the frog keeps the shadows/shininess from the art. When the chosen color is `Glass` (color index 22) the routine also applies `_applyGlassEffect`, which cuts the alpha values by half to reproduce transparency.
 - **Glitch-free fallback.** Sprite loading is asynchronous, but a placeholder ellipse is drawn whenever `loadSprite` rejects. That keeps the UI from freezing when files aren’t ready or the browser balks at the sprite cache.
+
+## Third-layer genera
+Four genera have an extra sprite layer (`frog_<genusId>_extra_256.png`) that is composited on top of the standard layers. This layer is **never tinted** — it renders at its original colors regardless of the frog’s body color or pattern.
+
+The layer order differs by genus because that is how the game itself composites them:
+
+| Genus | ID | Layer order |
+|---|---|---|
+| Porto | 115 | base → overlay → genus → extra |
+| Florens | 116 | base → genus → extra → overlay |
+| Triquetra | 119 | base → genus → extra → overlay |
+| Paschali | 120 | base → genus → extra → overlay |
+
+Porto is the special case: its genus layer (the frog body) renders *above* the shading overlay, with the extra layer on top of that. All other third-layer genera follow the standard order with the extra layer slotted in before the overlay.
+
+The set of genera that have a third layer is tracked in `EXTRA_LAYER_GENERA` (a `Set` in both `index.html` and `api/og.js`). Add a genus ID there and drop the corresponding `frog_<id>_extra_256.png` into `frog_sprites/` to enable it.
 
 ## Sprite management and caching
 - `loadSprite` keeps a promise cache so each `Image` only downloads once, and every sprite is fetched from `frog_sprites/` with `crossOrigin='anonymous'`. That promise is reused anywhere `renderFrog` needs the base, genus, or overlay textures, which was critical when dozens of species canvases try to draw simultaneously.
