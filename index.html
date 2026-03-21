@@ -2049,17 +2049,20 @@ function _renderFrogOffscreen(colorId, patternId, genusId, size) {
   const canvas = document.createElement('canvas');
   canvas.width = size; canvas.height = size;
   const ctx = canvas.getContext('2d');
-  return Promise.all([
+  const spriteList = [
     loadSprite('frog_base_256.png'),
     loadSprite('frog_' + genusId + '_256.png'),
     loadSprite('overlay_256.png'),
-  ]).then(([baseImg, genusImg, ovImg]) => {
+  ];
+  if (EXTRA_LAYER_GENERA.has(genusId)) spriteList.push(loadSprite('frog_' + genusId + '_extra_256.png'));
+  return Promise.all(spriteList).then(([baseImg, genusImg, ovImg, extraImg]) => {
     const [effPr, effPg, effPb] = isChroma ? hsvToRgb(chromaHue, 1, 1) : [pr, pg, pb];
     ctx.clearRect(0, 0, size, size);
     if (isGlass) ctx.globalAlpha = 0.5;
     _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, size, size, cr, cg, cb);
     ctx.globalAlpha = 1.0;
     _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, size, size, effPr, effPg, effPb);
+    if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, size, size);
     _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, size, size);
     return canvas;
   });

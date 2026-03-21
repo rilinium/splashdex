@@ -13,6 +13,7 @@ const FROGBG_PATH  = path.join(__dirname, '..', 'embedfrogbg.png');
 const SETS_PATH    = path.join(__dirname, '..', 'sets.txt');
 
 const CHROMA_ID  = 15;
+const EXTRA_LAYER_GENERA = new Set([115, 116, 119]);
 const GIF_FRAMES = 16;
 const GIF_DELAY  = 160; // ms per frame → 2.56 s full cycle
 
@@ -86,17 +87,20 @@ async function renderFrog(canvas, colorId, patternId, genusId, patternRgbOverrid
   const w = canvas.width, h = canvas.height;
   const ctx = canvas.getContext('2d');
 
-  const [baseImg, genusImg, ovImg] = await Promise.all([
+  const spritePromises = [
     getSprite('frog_base_256.png'),
     getSprite(`frog_${genusId}_256.png`),
     getSprite('overlay_256.png'),
-  ]);
+  ];
+  if (EXTRA_LAYER_GENERA.has(genusId)) spritePromises.push(getSprite(`frog_${genusId}_extra_256.png`));
+  const [baseImg, genusImg, ovImg, extraImg] = await Promise.all(spritePromises);
 
   ctx.clearRect(0, 0, w, h);
   if (isGlass) ctx.globalAlpha = 0.5;
   _tintLayer(ctx, baseImg,  0, 0, w, h, cr, cg, cb);
   ctx.globalAlpha = 1.0;
   _tintLayer(ctx, genusImg, 0, 0, w, h, pr, pg, pb);
+  if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
   _multiplyOverlay(ctx, ovImg, 0, 0, w, h);
 }
 
