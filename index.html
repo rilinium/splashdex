@@ -298,6 +298,48 @@
     .btn-export:hover { background: var(--surface1); color: var(--text); }
     .btn-export:active { opacity: .7; }
 
+    /* ── Scenery ── */
+    .scenery-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+    .scenery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 10px;
+    }
+    .scenery-card {
+      background: var(--mantle);
+      border: 1px solid var(--surface0);
+      border-radius: 12px;
+      padding: 10px 8px 8px;
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      cursor: default;
+      transition: border-color .15s;
+    }
+    .scenery-card:hover { border-color: var(--surface2); }
+    .scenery-card.seasonal { border-color: var(--peach); }
+    .scenery-card.seasonal:hover { border-color: var(--yellow); }
+    .scenery-img-wrap {
+      width: 72px; height: 72px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .scenery-img-wrap img { max-width: 72px; max-height: 72px; image-rendering: pixelated; }
+    .scenery-name { font-size: 11px; font-weight: 600; color: var(--text); text-align: center; line-height: 1.3; }
+    .scenery-level { font-size: 10px; color: var(--subtext0); }
+    .scenery-stats { font-size: 10px; color: var(--overlay1); text-align: center; line-height: 1.5; }
+    .scenery-seasonal-badge {
+      font-size: 9px; color: var(--peach); font-weight: 600; letter-spacing: .3px;
+    }
+    .scenery-credit {
+      margin-top: 18px; font-size: 10px; color: var(--overlay0);
+      text-align: center; line-height: 1.6;
+    }
+    .scenery-credit a { color: var(--overlay1); text-decoration: none; }
+    .scenery-credit a:hover { color: var(--text); }
+    @media (max-width: 600px) {
+      .scenery-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 7px; }
+      .scenery-img-wrap { width: 60px; height: 60px; }
+      .scenery-img-wrap img { max-width: 60px; max-height: 60px; }
+    }
+
     /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -362,6 +404,7 @@
   <button class="tab-btn"        onclick="tab('species', this)">🐸 Breeds</button>
   <button class="tab-btn"        onclick="tab('setbuilder', this)">📋 Set Builder</button>
   <button class="tab-btn"        onclick="tab('sets', this)">📅 Weekly Sets</button>
+  <button class="tab-btn"        onclick="tab('scenery', this)">🌿 Scenery</button>
 </nav>
 
 <div class="content">
@@ -588,6 +631,36 @@
     </div>
     <div id="sets-status" class="status-loading">Fetching sets…</div>
     <div class="sets-grid" id="sets-grid"></div>
+  </div>
+
+  <!-- ── Scenery ── -->
+  <div class="tab-panel" id="tab-scenery">
+    <div class="scenery-toolbar">
+      <input class="search-input" type="search" id="scenery-search"
+             placeholder="Search scenery…"
+             oninput="filterScenery(this.value)">
+      <select class="filter-select" id="scenery-level-filter"
+              onchange="filterScenery(document.getElementById('scenery-search').value)">
+        <option value="">All levels</option>
+        <option value="1">Level 1</option>
+        <option value="2">Level 2</option>
+        <option value="3">Level 3</option>
+        <option value="4">Level 4</option>
+        <option value="5">Level 5</option>
+        <option value="6">Level 6</option>
+        <option value="7">Level 7</option>
+        <option value="8">Level 8</option>
+        <option value="9">Level 9</option>
+      </select>
+      <span class="count-lbl" id="scenery-count"></span>
+    </div>
+    <div class="scenery-grid" id="scenery-grid"></div>
+    <div class="scenery-credit">
+      Happiness, cost &amp; delivery data sourced from the
+      <em>Pocket Frogs Habitat Tracker</em> spreadsheet by
+      <a href="https://discord.gg/D5nrUpv" target="_blank" rel="noopener">@kielasandros</a>
+      on Discord. Sprites extracted from the game by rilinium.
+    </div>
   </div>
 
 </div>
@@ -1001,6 +1074,7 @@ function toHex(r, g, b) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 let setsInitialized = false;
+let sceneryInitialized = false;
 
 function tab(name, btn, _history = 'push') {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -1010,6 +1084,7 @@ function tab(name, btn, _history = 'push') {
   if (name === 'sets'       && !setsInitialized)       { setsInitialized = true; loadSets(); }
   if (name === 'species'    && !breedsInitialized)     { breedsInitialized = true; filterSpecies(''); }
   if (name === 'setbuilder' && !sbBuilderInitialized)  { initSetBuilder(); }
+  if (name === 'scenery'    && !sceneryInitialized)    { sceneryInitialized = true; filterScenery(''); }
   if (_history !== 'none' && _builderInitDone && _TAB_PATHS[name]) {
     (_history === 'replace' ? history.replaceState : history.pushState)
       .call(history, null, '', _TAB_PATHS[name]);
@@ -2256,6 +2331,247 @@ _builderInitDone = true;   // now replaceState is safe to use in builderUpdate
 parseDeepLink();
 // Stamp the initial random frog into the URL if we ended up on the builder tab with no specific frog
 if (!/^\/(breeds|set|customset)/.test(_initialPath) && !/\?frog=/.test(_initialSearch)) builderUpdate();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Scenery
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Stats derived from unlock level (standard formula)
+const SCENERY_LEVEL_STATS = [
+  null,
+  {happiness: 4,  cost: 100,  sell: 25,   delivery: '30m'},
+  {happiness: 8,  cost: 116,  sell: 29,   delivery: '36m'},
+  {happiness: 12, cost: 180,  sell: 45,   delivery: '1h 3m'},
+  {happiness: 16, cost: 356,  sell: 89,   delivery: '2h 14m'},
+  {happiness: 20, cost: 724,  sell: 181,  delivery: '4h 46m'},
+  {happiness: 24, cost: 1396, sell: 349,  delivery: '9h 20m'},
+  {happiness: 28, cost: 2500, sell: 625,  delivery: '16h 53m'},
+  {happiness: 32, cost: 4196, sell: 1049, delivery: '1d 4h 26m'},
+  {happiness: 36, cost: 9999, sell: 2499, delivery: '1d 21h 16m'},
+];
+
+// Overrides for event items with non-standard stats (sourced from spreadsheet by @kielasandros)
+const SCENERY_STAT_OVERRIDES = {
+  216: {happiness: 24, cost: 2000, sell: 500,  delivery: '2h 14m'},
+  217: {happiness: 18, cost: 1256, sell: 314,  delivery: '1h 3m'},
+  218: {happiness: 14, cost: 456,  sell: 114,  delivery: '36m'},
+  219: {happiness: 14, cost: 456,  sell: 114,  delivery: '36m'},
+  220: {happiness: 14, cost: 456,  sell: 114,  delivery: '36m'},
+  221: {happiness: 14, cost: 456,  sell: 114,  delivery: '36m'},
+};
+
+// [id, name, level, filename, seasonal?]
+// Data from game's scenery.csv (v3.15.0); metadata cross-referenced with
+// Pocket Frogs Habitat Tracker by @kielasandros (Discord)
+const SCENERY_DATA = [
+  [0,'Small Maple Leaf',1,'scenery_0.png'],
+  [1,'Large Maple Leaf',6,'scenery_1.png'],
+  [2,'Fall Leaf',3,'scenery_2.png'],
+  [3,'Fan Leaf',1,'scenery_3.png'],
+  [4,'Serrated Leaf',3,'scenery_4.png'],
+  [5,'Heart Leaf',3,'scenery_5.png'],
+  [6,'Three Petal Flower',2,'scenery_6.png'],
+  [7,'Log Fern',8,'scenery_7.png'],
+  [8,'Mushrooms',3,'scenery_9.png'],
+  [9,'Toadstool',5,'scenery_10.png'],
+  [10,'Spear Leaf',2,'scenery_11.png'],
+  [11,'Fire Flower',6,'scenery_12.png'],
+  [12,'Snow Flower',1,'scenery_13.png'],
+  [13,'Magenta Flower',4,'scenery_14.png'],
+  [14,'Red Velvet Leaf',5,'scenery_15.png'],
+  [15,'White Daisy',2,'scenery_16.png'],
+  [16,'Thistle Flower',2,'scenery_17.png'],
+  [17,'Purple Flower',2,'scenery_18.png'],
+  [18,'Red Flower',3,'scenery_19.png'],
+  [19,'Pink Flower',5,'scenery_20.png'],
+  [20,'Island Flower',4,'scenery_21.png'],
+  [21,'Yellow Flower',3,'scenery_22.png'],
+  [22,'Purple Star Flower',8,'scenery_23.png'],
+  [23,'Red Rose',7,'scenery_24.png'],
+  [24,'Goldenrod Flower',5,'scenery_25.png'],
+  [25,'Digitate Leaf',3,'scenery_27.png'],
+  [26,'Obtuse Leaf',4,'scenery_29.png'],
+  [27,'Shell Fossil',8,'scenery_30.png'],
+  [28,'River Rock',6,'scenery_31.png'],
+  [29,'Arrowhead',8,'scenery_32.png'],
+  [30,'Red Lobed Leaf',5,'scenery_33.png'],
+  [31,'Striped Long Leaf',8,'scenery_36.png'],
+  [32,'Yellow Gem',7,'scenery_37.png'],
+  [33,'Gray Polished Stone',7,'scenery_38.png'],
+  [34,'Purple Polished Stone',6,'scenery_39.png'],
+  [35,'Pink Polished Stone',5,'scenery_40.png'],
+  [36,'Amber Stone',6,'scenery_41.png'],
+  [37,'Green Polished Stone',7,'scenery_42.png'],
+  [38,'Mayan Relic',8,'scenery_43.png'],
+  [39,'Clover',3,'scenery_44.png'],
+  [40,'Pinnate Plant',6,'scenery_48.png'],
+  [41,'Dead Leaf',3,'scenery_47.png'],
+  [42,'Glacial Stone',5,'scenery_49.png'],
+  [55,'Megalodon Tooth',8,'scenery_50.png'],
+  [56,'Giant Lily',8,'scenery_52.png'],
+  [57,'Old Pocket Watch',8,'scenery_53.png'],
+  [59,'Green Long Leaf',8,'scenery_35.png'],
+  [128,'Giant Gold Coin',9,'scenery_8.png'],
+  [129,'Cosmos Flower',5,'scenery_26.png'],
+  [130,'Cuban Coin',5,'scenery_28.png'],
+  [131,'Spanish Silver',9,'scenery_34.png'],
+  [132,'Fiji Sixpence',5,'scenery_51.png'],
+  [133,'Jurassic Croton',9,'scenery_54.png'],
+  [134,'Sunflower',7,'scenery_55.png'],
+  [135,'Passion Flower',8,'scenery_56.png'],
+  [136,'Monstera',7,'scenery_57.png'],
+  [137,'Bowtie Fern',8,'scenery_58.png'],
+  [138,'Maranta',8,'scenery_59.png'],
+  [139,'Prince Palm',8,'scenery_60.png'],
+  [140,'Small Succulent',5,'scenery_61.png'],
+  [141,'Aeonium Succulent',5,'scenery_62.png'],
+  [142,'Frog Idol',9,'scenery_63.png'],
+  [143,'Jewel Flower',9,'scenery_64.png'],
+  [144,'Scarab Artifact',9,'scenery_65.png'],
+  [156,'Tile Ornament',9,'scenery_66.png'],
+  [157,'Giant Violet Flower',9,'scenery_67.png'],
+  [158,'Yellow Daisy',7,'scenery_68.png'],
+  [159,'Poinsettia',9,'scenery_69.png'],
+  [160,'Giant Pink Flower',9,'scenery_70.png'],
+  [161,'Mint Leaf',5,'scenery_71.png'],
+  [162,'Giant Dew Leaf',9,'scenery_72.png'],
+  [167,'Purple Lily',9,'scenery_73.png'],
+  [168,'Bronze Star',9,'scenery_74.png'],
+  [169,'Gold Bow',9,'scenery_75.png'],
+  [170,'Red Bow',9,'scenery_76.png'],
+  [171,'Chrysanthemum',9,'scenery_77.png'],
+  [172,'Wooden Frame',9,'scenery_78.png'],
+  [173,'Celtic Talisman',9,'scenery_79.png'],
+  [174,'China Aster',9,'scenery_80.png'],
+  [181,'Rainbow Disc',9,'scenery_81.png'],
+  [182,'Scallop Shell',7,'scenery_82.png'],
+  [183,'Sea Snail Shell',7,'scenery_83.png'],
+  [184,'Key',7,'scenery_84.png'],
+  [185,'Small Snail Shell',5,'scenery_85.png'],
+  [186,'Ammonite',8,'scenery_86.png'],
+  [187,'Compass',9,'scenery_87.png'],
+  [188,'Silver Pendant',9,'scenery_88.png'],
+  [189,'White Button',5,'scenery_89.png'],
+  [190,'Green Button',5,'scenery_90.png'],
+  [191,'Wooden Button',5,'scenery_91.png'],
+  [195,'Ladybug',3,'scenery_92.png'],
+  [196,'Green Butterfly',7,'scenery_93.png'],
+  [197,'Orange Butterfly',7,'scenery_94.png'],
+  [198,'Zebra Butterfly',7,'scenery_95.png'],
+  [199,'Twig',2,'scenery_96.png'],
+  [206,'Wet Leaf',3,'scenery_97.png'],
+  [207,'Yellow Starfish',9,'scenery_98.png'],
+  [208,'Sand Dollar',9,'scenery_99.png'],
+  [209,'Bottle Cap',5,'scenery_100.png'],
+  [210,'Dark Pebble',6,'scenery_101.png'],
+  [211,'White Feather',8,'scenery_102.png'],
+  [212,'Orange Slice',9,'scenery_103.png'],
+  [213,'Lime Slice',8,'scenery_104.png'],
+  [214,'Heart Ornament',9,'scenery_105.png'],
+  [215,'Dahlia Flower',9,'scenery_106.png'],
+  [216,'Heart Shaped Chocolate Box',4,'scenery_107.png',true],
+  [217,'Love Note',3,'scenery_108.png',true],
+  [218,'Blue Rose',2,'scenery_109.png',true],
+  [219,'Pink Rose',2,'scenery_110.png',true],
+  [220,'Love Rose',2,'scenery_111.png',true],
+  [221,'Yellow Rose',2,'scenery_112.png',true],
+  [222,'Amethyst Crystal',9,'scenery_113.png'],
+  [223,'Anchor',8,'scenery_114.png'],
+  [224,'Anemone',7,'scenery_115.png'],
+  [225,'Bark Piece',6,'scenery_116.png'],
+  [226,'Boat',5,'scenery_117.png'],
+  [227,'Cherry Blossom',4,'scenery_118.png'],
+  [228,'Chess Tower',9,'scenery_119.png'],
+  [229,'Dragon Fly',8,'scenery_120.png'],
+  [230,'Drift Wood',7,'scenery_121.png'],
+  [231,'Feather',6,'scenery_122.png'],
+  [232,'Black Beetle',5,'scenery_123.png'],
+  [233,'Lily',4,'scenery_124.png'],
+  [234,'Mint Sprig',9,'scenery_125.png'],
+  [235,'Mossy Rock',8,'scenery_126.png'],
+  [236,'Mushroom Cluster',7,'scenery_127.png'],
+  [237,'Pine Cone',6,'scenery_128.png'],
+  [238,'Seaweed',4,'scenery_129.png'],
+  [239,'Shell',5,'scenery_130.png'],
+  [240,'Starfish',8,'scenery_131.png'],
+  [241,'Turtle',9,'scenery_132.png'],
+  [262,'Lily Pad',6,'scenery_133.png'],
+  [263,'Golf Ball',5,'scenery_134.png'],
+  [264,'Frogboy',9,'scenery_135.png',true],
+  [265,'Record (Rain)',9,'scenery_136.png',true],
+  [266,'Record (Fire)',9,'scenery_137.png',true],
+  [267,'Record (Waves)',9,'scenery_138.png',true],
+  [268,'Record (Night)',9,'scenery_139.png',true],
+  [269,'Record (Frogs)',9,'scenery_140.png',true],
+  [270,'Rainbow Pin',9,'scenery_141.png',true],
+  [271,'Horseshoe Pin',9,'scenery_142.png',true],
+  [272,'Shamrock Pin',9,'scenery_143.png',true],
+  [273,'Record (Irish Harp)',9,'scenery_144.png',true],
+  [275,'Chocolate Bunny',9,'scenery_145.png',true],
+  [276,'Marshmallow Bunny',9,'scenery_146.png',true],
+  [277,'Painted Egg',9,'scenery_147.png',true],
+  [278,'Tulip',9,'scenery_148.png',true],
+];
+
+function _sceneryStats(id, level) {
+  return SCENERY_STAT_OVERRIDES[id] || SCENERY_LEVEL_STATS[level] || {};
+}
+
+function renderSceneryGrid(items) {
+  const grid = document.getElementById('scenery-grid');
+  grid.innerHTML = '';
+  document.getElementById('scenery-count').textContent = items.length + ' items';
+  const frag = document.createDocumentFragment();
+  for (const [id, name, level, filename, seasonal] of items) {
+    const s = _sceneryStats(id, level);
+    const card = document.createElement('div');
+    card.className = 'scenery-card' + (seasonal ? ' seasonal' : '');
+    card.title = name;
+
+    const imgWrap = document.createElement('div');
+    imgWrap.className = 'scenery-img-wrap';
+    const img = document.createElement('img');
+    img.src = 'scenery_sprites/' + filename;
+    img.alt = name;
+    img.loading = 'lazy';
+    imgWrap.appendChild(img);
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'scenery-name';
+    nameEl.textContent = name;
+
+    const levelEl = document.createElement('div');
+    levelEl.className = 'scenery-level';
+    levelEl.textContent = 'Lv ' + level + ' · ★ ' + (s.happiness || '?');
+
+    const statsEl = document.createElement('div');
+    statsEl.className = 'scenery-stats';
+    statsEl.innerHTML = (s.cost ? s.cost.toLocaleString() + ' coins' : '—') +
+      '<br>' + (s.delivery || '—');
+
+    card.appendChild(imgWrap);
+    card.appendChild(nameEl);
+    card.appendChild(levelEl);
+    card.appendChild(statsEl);
+    if (seasonal) {
+      const badge = document.createElement('div');
+      badge.className = 'scenery-seasonal-badge';
+      badge.textContent = 'seasonal';
+      card.appendChild(badge);
+    }
+    frag.appendChild(card);
+  }
+  grid.appendChild(frag);
+}
+
+function filterScenery(q) {
+  q = (q || '').toLowerCase().trim();
+  const lvl = document.getElementById('scenery-level-filter').value;
+  let items = SCENERY_DATA;
+  if (q) items = items.filter(([,name]) => name.toLowerCase().includes(q));
+  if (lvl) items = items.filter(([,, level]) => String(level) === lvl);
+  renderSceneryGrid(items);
+}
 
 // Back/forward navigation: switch tabs to match the new URL
 window.addEventListener('popstate', () => {
