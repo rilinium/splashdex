@@ -2263,11 +2263,13 @@ async function exportSetImage(frogData, setName, weekCode, transparent) {
   const FROG_SIZE = 88;
   const GAP       = 4;
 
-  // Render each individual frog (count times per entry)
+  // Render each individual frog (count times per entry), track names in parallel
   const frogCanvases = [];
+  const frogNames    = [];
   for (const f of frogData) {
     for (let n = 0; n < f.count; n++) {
       frogCanvases.push(await _renderFrogOffscreen(f.colorId, f.patternId, f.genusId, FROG_SIZE));
+      frogNames.push(frogFullName(f.colorId, f.patternId, f.genusId));
     }
   }
   if (!frogCanvases.length) return;
@@ -2288,10 +2290,11 @@ async function exportSetImage(frogData, setName, weekCode, transparent) {
   // Background: game-style dark pill + set name / week / splashdex watermark
   const H_PAD   = 18;
   const V_PAD   = 14;
+  const NAME_H  = 26; // space for per-frog name labels
   const LABEL_H = weekCode ? 72 : 58;
   const out     = document.createElement('canvas');
   out.width  = totalW + H_PAD * 2;
-  out.height = FROG_SIZE + V_PAD * 2 + LABEL_H;
+  out.height = FROG_SIZE + V_PAD * 2 + NAME_H + LABEL_H;
   const ctx  = out.getContext('2d');
 
   const grad = ctx.createLinearGradient(0, 0, out.width, out.height);
@@ -2304,10 +2307,26 @@ async function exportSetImage(frogData, setName, weekCode, transparent) {
   frogCanvases.forEach((fc, i) =>
     ctx.drawImage(fc, H_PAD + i * (FROG_SIZE + GAP), V_PAD, FROG_SIZE, FROG_SIZE));
 
+  // Per-frog name labels, centered under each frog, auto-shrinking to fit
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle    = 'rgba(205,214,244,0.70)';
+  const nameY = V_PAD + FROG_SIZE + 4;
+  frogNames.forEach((name, i) => {
+    const cx = H_PAD + i * (FROG_SIZE + GAP) + FROG_SIZE / 2;
+    let fontSize = 9;
+    ctx.font = fontSize + 'px "Segoe UI", system-ui, sans-serif';
+    while (ctx.measureText(name).width > FROG_SIZE && fontSize > 6) {
+      fontSize -= 0.5;
+      ctx.font = fontSize + 'px "Segoe UI", system-ui, sans-serif';
+    }
+    ctx.fillText(name, cx, nameY, FROG_SIZE);
+  });
+
   ctx.textAlign    = 'center';
   ctx.textBaseline = 'top';
 
-  const labelTop = FROG_SIZE + V_PAD;
+  const labelTop = FROG_SIZE + V_PAD + NAME_H;
   if (setName) {
     ctx.fillStyle = 'rgba(205,214,244,0.55)';
     ctx.font      = 'bold 18px "Segoe UI", system-ui, sans-serif';
