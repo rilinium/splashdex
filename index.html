@@ -2416,18 +2416,6 @@ async function exportSetImage(frogData, setName, weekCode, transparent) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Init
-// ══════════════════════════════════════════════════════════════════════════════
-
-requestAnimationFrame(animateChroma);
-initBuilder();
-initSpecies();
-_builderInitDone = true;   // now replaceState is safe to use in builderUpdate
-parseDeepLink();
-// Stamp the initial random frog into the URL if we ended up on the builder tab with no specific frog
-if (!/^\/(breeds|set|customset)/.test(_initialPath) && !/\?frog=/.test(_initialSearch)) builderUpdate();
-
-// ══════════════════════════════════════════════════════════════════════════════
 // Scenery
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -2817,6 +2805,18 @@ function dnaCalc() {
     statCard('Stamina', stamina, stMin, stMax, 'stamina', '') +
     statCard('Value',   value,   vMin, vMax,  'value',   'coins');
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Init (must be last — depends on SCENERY_DATA, GENUS_LEVEL, etc.)
+// ══════════════════════════════════════════════════════════════════════════════
+
+requestAnimationFrame(animateChroma);
+initBuilder();
+initSpecies();
+_builderInitDone = true;   // now replaceState is safe to use in builderUpdate
+parseDeepLink();
+// Stamp the initial random frog into the URL if we ended up on the builder tab with no specific frog
+if (!/^\/(breeds|set|customset)/.test(_initialPath) && !/\?frog=/.test(_initialSearch)) builderUpdate();
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
