@@ -299,6 +299,34 @@
     .btn-export:active { opacity: .7; }
 
     /* ── Scenery ── */
+    /* ── DNA Calculator ── */
+    .dna-layout { display: flex; flex-direction: column; gap: 24px; }
+    .dna-controls { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+    .dna-selects { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 200px; }
+    .dna-field { display: flex; flex-direction: column; gap: 4px; }
+    .dna-label { font-size: 11px; color: var(--subtext0); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .dna-select { width: 100%; }
+    .dna-preview-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .dna-canvas { width: 128px; height: 128px; image-rendering: pixelated; border-radius: 8px; background: var(--surface0); }
+    .dna-frog-name { font-size: 11px; color: var(--subtext0); text-align: center; max-width: 128px; }
+    .dna-results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .dna-stat-card { background: var(--surface0); border-radius: 10px; padding: 16px 12px; text-align: center; border: 1px solid var(--surface1); }
+    .dna-stat-label { font-size: 10px; color: var(--subtext0); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; margin-bottom: 6px; }
+    .dna-stat-value { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; }
+    .dna-stat-range { font-size: 10px; color: var(--overlay1); margin-top: 5px; }
+    .dna-stat-bar-wrap { margin-top: 8px; background: var(--surface1); border-radius: 4px; height: 5px; overflow: hidden; }
+    .dna-stat-bar { height: 100%; border-radius: 4px; transition: width .3s ease; }
+    .dna-stat-bar.speed   { background: var(--blue); }
+    .dna-stat-bar.stamina { background: var(--green); }
+    .dna-stat-bar.value   { background: var(--yellow); }
+    .dna-placeholder { color: var(--subtext0); font-size: 13px; padding: 12px 0; grid-column: 1/-1; }
+    @media (max-width: 540px) {
+      .dna-controls { flex-direction: column; }
+      .dna-preview-wrap { flex-direction: row; align-items: center; gap: 12px; }
+      .dna-frog-name { max-width: none; }
+      .dna-results { grid-template-columns: 1fr 1fr; }
+    }
+
     .scenery-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
     .scenery-grid {
       display: grid;
@@ -405,6 +433,7 @@
   <button class="tab-btn"        onclick="tab('setbuilder', this)">📋 Set Builder</button>
   <button class="tab-btn"        onclick="tab('sets', this)">📅 Weekly Sets</button>
   <button class="tab-btn"        onclick="tab('scenery', this)">🌿 Scenery (BETA)</button>
+  <button class="tab-btn"        onclick="tab('dna', this)">🧬 DNA Calculator</button>
 </nav>
 
 <div class="content">
@@ -663,6 +692,39 @@
     </div>
   </div>
 
+  <!-- ── DNA Calculator ── -->
+  <div class="tab-panel" id="tab-dna">
+    <div class="dna-layout">
+      <div class="dna-controls">
+        <div class="dna-selects">
+          <div class="dna-field">
+            <label class="dna-label">Base Color</label>
+            <select class="filter-select dna-select" id="dna-color" onchange="dnaCalc()"></select>
+          </div>
+          <div class="dna-field">
+            <label class="dna-label">Pattern Color</label>
+            <select class="filter-select dna-select" id="dna-patcolor" onchange="dnaCalc()"></select>
+          </div>
+          <div class="dna-field">
+            <label class="dna-label">Genus</label>
+            <select class="filter-select dna-select" id="dna-genus" onchange="dnaCalc()"></select>
+          </div>
+        </div>
+        <div class="dna-preview-wrap">
+          <canvas class="dna-canvas" id="dna-canvas" width="128" height="128"></canvas>
+          <div class="dna-frog-name" id="dna-frog-name"></div>
+        </div>
+      </div>
+      <div class="dna-results" id="dna-results">
+        <div class="dna-placeholder">Select a frog above to see its stats</div>
+      </div>
+    </div>
+    <div class="scenery-credit" style="margin-top:18px;">
+      This calculator would not be possible without the incredible
+      <a href="https://docs.google.com/spreadsheets/d/1TNTK09vM8tlj6BC8haobuWCQvV4qNyDsRYsf-4hXdCc/edit?gid=0#gid=0" target="_blank" rel="noopener" class="credit-link">Pocket Frogs Database</a> spreadsheet &lt;3
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -671,7 +733,7 @@ const _initialPath   = location.pathname;
 const _initialSearch = location.search;
 let   _builderInitDone = false;
 
-const _TAB_PATHS = { builder: '/frog', species: '/breeds', setbuilder: '/customset', sets: '/set', scenery: '/scenery' };
+const _TAB_PATHS = { builder: '/frog', species: '/breeds', setbuilder: '/customset', sets: '/set', scenery: '/scenery', dna: '/dna' };
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Game Data
@@ -1075,6 +1137,7 @@ function toHex(r, g, b) {
 
 let setsInitialized = false;
 let sceneryInitialized = false;
+let dnaInitialized = false;
 
 function tab(name, btn, _history = 'push') {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -1085,6 +1148,7 @@ function tab(name, btn, _history = 'push') {
   if (name === 'species'    && !breedsInitialized)     { breedsInitialized = true; filterSpecies(''); }
   if (name === 'setbuilder' && !sbBuilderInitialized)  { initSetBuilder(); }
   if (name === 'scenery'    && !sceneryInitialized)    { sceneryInitialized = true; filterScenery(''); }
+  if (name === 'dna'        && !dnaInitialized)        { dnaInitialized = true; initDnaCalc(); }
   if (_history !== 'none' && _builderInitDone && _TAB_PATHS[name]) {
     (_history === 'replace' ? history.replaceState : history.pushState)
       .call(history, null, '', _TAB_PATHS[name]);
@@ -2080,7 +2144,13 @@ function parseDeepLink() {
 
   // Helper: get tab button by tab name
   const _btn = n => document.querySelector('.tab-btn:nth-child(' +
-    ({ builder: 1, species: 2, setbuilder: 3, sets: 4, scenery: 5 }[n]) + ')');
+    ({ builder: 1, species: 2, setbuilder: 3, sets: 4, scenery: 5, dna: 6 }[n]) + ')');
+
+  // ── Path: /dna ────────────────────────────────────────────────────────────
+  if (path === '/dna') {
+    tab('dna', _btn('dna'), 'replace');
+    return;
+  }
 
   // ── Path: /scenery ────────────────────────────────────────────────────────
   if (path === '/scenery') {
@@ -2607,8 +2677,146 @@ window.addEventListener('popstate', () => {
   if (p === '/set')       return tab('sets',       _btn('sets'),       'none');
   if (p === '/customset') return tab('setbuilder', _btn('setbuilder'), 'none');
   if (p === '/scenery')   return tab('scenery',    _btn('scenery'),    'none');
+  if (p === '/dna')       return tab('dna',        _btn('dna'),        'none');
   tab('builder', _btn('builder'), 'none');
 });
+
+// ── DNA Calculator ────────────────────────────────────────────────────────────
+let _dnaStats = null;
+
+// Pattern level lookup (patternId/genusId → level)
+const GENUS_LEVEL = {
+  0:1,1:5,2:2,3:2,4:3,5:3,6:6,7:5,8:7,9:3,10:4,11:6,12:8,13:5,14:4,15:4,
+  16:7,17:5,18:6,19:7,20:8,21:9,22:9,23:10,24:10,25:11,26:11,27:12,28:12,
+  29:13,30:13,31:14,32:14,33:15,34:15,35:16,36:16,37:3,38:3,39:3,40:4,
+  41:5,42:6,43:14,44:10,45:8,46:9,47:12,48:11,49:16,50:13,51:7,52:15,
+  53:17,54:17,55:17,56:18,57:18,58:18,59:19,60:19,61:19,62:20,63:20,64:20,
+  65:21,66:21,67:21,68:22,69:22,70:22,71:23,72:23,73:23,74:24,75:24,76:24,
+  77:25,78:25,79:25,80:26,81:26,82:26,83:27,84:27,85:27,86:28,87:28,88:28,
+  89:29,90:29,91:29,92:30,93:30,94:30,95:31,96:31,97:31,98:32,99:32,100:32,
+  101:33,102:33,103:33,104:34,105:34,106:34,107:35,108:35,109:35,110:30,
+  111:36,112:37,113:20,114:36,115:10,116:40,117:39,118:38,119:40,120:40
+};
+
+function _dnaSpeedRange(level) {
+  return {
+    min: 6 + (level - 1) * 5 + Math.floor(level / 5),
+    max: 7 + (level - 1) * 7 - Math.floor(level / 5)
+  };
+}
+
+function initDnaCalc() {
+  // Populate genus select (sorted by level then name)
+  const genusEl = document.getElementById('dna-genus');
+  const entries = Object.entries(GENERA)
+    .map(([id, name]) => ({ id: parseInt(id), name, level: GENUS_LEVEL[id] || 0 }))
+    .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
+  entries.forEach(({ id, name, level }) => {
+    const o = document.createElement('option');
+    o.value = id;
+    o.textContent = name + (level ? ' (Lv ' + level + ')' : '');
+    genusEl.appendChild(o);
+  });
+
+  // Populate base color select
+  const colorEl = document.getElementById('dna-color');
+  Object.entries(COLORS).forEach(([id, info]) => {
+    const o = document.createElement('option');
+    o.value = id;
+    o.textContent = info[0];
+    colorEl.appendChild(o);
+  });
+
+  // Populate pattern color select
+  const patEl = document.getElementById('dna-patcolor');
+  Object.entries(PATTERN_COLORS).forEach(([id, info]) => {
+    const o = document.createElement('option');
+    o.value = id;
+    o.textContent = info[0];
+    patEl.appendChild(o);
+  });
+
+  // Lazy-load stats JSON then calculate
+  if (!_dnaStats) {
+    fetch('frog_stats.json')
+      .then(r => r.json())
+      .then(data => { _dnaStats = data; dnaCalc(); })
+      .catch(() => {
+        document.getElementById('dna-results').innerHTML =
+          '<div class="dna-placeholder" style="color:var(--red)">Failed to load stats data.</div>';
+      });
+  } else {
+    dnaCalc();
+  }
+}
+
+function dnaCalc() {
+  const genusId    = parseInt(document.getElementById('dna-genus').value);
+  const colorId    = parseInt(document.getElementById('dna-color').value);
+  const patColorId = parseInt(document.getElementById('dna-patcolor').value);
+
+  // Update frog preview
+  const canvas = document.getElementById('dna-canvas');
+  renderFrog(canvas, colorId, patColorId, genusId);
+  document.getElementById('dna-frog-name').textContent =
+    frogFullName(colorId, patColorId, genusId);
+
+  const resultsEl = document.getElementById('dna-results');
+
+  if (!_dnaStats) {
+    resultsEl.innerHTML = '<div class="dna-placeholder">Loading stats…</div>';
+    return;
+  }
+
+  const entry = _dnaStats[genusId];
+  if (!entry) {
+    resultsEl.innerHTML = '<div class="dna-placeholder">No stats data for this genus yet.</div>';
+    return;
+  }
+
+  const speed   = entry.s  && entry.s[colorId]  ? entry.s[colorId][patColorId]  : null;
+  const stamina = entry.t  && entry.t[colorId]  ? entry.t[colorId][patColorId]  : null;
+  const value   = entry.v  && entry.v[colorId]  ? entry.v[colorId][patColorId]  : null;
+
+  const level = GENUS_LEVEL[genusId] || 0;
+  const { min: sMin, max: sMax } = _dnaSpeedRange(level);
+
+  function pct(val, lo, hi) {
+    return hi > lo ? Math.round((val - lo) / (hi - lo) * 100) : 50;
+  }
+
+  function statCard(label, val, lo, hi, cls, unit) {
+    const p = val != null ? pct(val, lo, hi) : 0;
+    const displayVal = val != null ? val.toLocaleString() : '—';
+    const rangeText  = val != null ? lo.toLocaleString() + ' – ' + hi.toLocaleString() : '';
+    return `<div class="dna-stat-card">
+      <div class="dna-stat-label">${label}</div>
+      <div class="dna-stat-value">${displayVal}${unit && val != null ? `<span style="font-size:14px;font-weight:400;color:var(--subtext0)"> ${unit}</span>` : ''}</div>
+      ${rangeText ? `<div class="dna-stat-range">range ${rangeText}</div>` : ''}
+      <div class="dna-stat-bar-wrap"><div class="dna-stat-bar ${cls}" style="width:${p}%"></div></div>
+    </div>`;
+  }
+
+  // Stamina range: use same formula as speed (same min/max pattern per level)
+  const stMin = sMin, stMax = sMax;
+
+  // Value range: get min/max from the genus entry
+  let vMin = Infinity, vMax = -Infinity;
+  if (entry.v) {
+    for (const row of entry.v) {
+      if (!row) continue;
+      for (const v of row) {
+        if (v != null) { vMin = Math.min(vMin, v); vMax = Math.max(vMax, v); }
+      }
+    }
+  }
+  if (vMin === Infinity) { vMin = 0; vMax = 0; }
+
+  resultsEl.innerHTML =
+    statCard('Speed',   speed,   sMin, sMax, 'speed',   '') +
+    statCard('Stamina', stamina, stMin, stMax, 'stamina', '') +
+    statCard('Value',   value,   vMin, vMax,  'value',   'coins');
+}
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
