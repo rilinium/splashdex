@@ -14,7 +14,7 @@
   },
   "routes": [
     { "src": "^/stats$", "dest": "/api/stats" },
-    { "src": "^/(frog|breeds|set|customset)$", "dest": "/api/page" },
+    { "src": "^/(frog|breeds|set|customset|scenery|dna)$", "dest": "/api/page" },
     { "src": "^/$", "dest": "/api/page" },
     { "handle": "filesystem" }
   ]
