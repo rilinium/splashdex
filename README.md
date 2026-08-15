@@ -1,7 +1,9 @@
 ![Splashdex logo](embedbanner.png)
 ![Badge](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Frilinium%2Fsplashdex&label=Hits&icon=github&color=%23e685b5&message=&style=for-the-badge&tz=UTC)
 
-Pocket Frogs resource — 44,528 combinations, weekly sets, and frog builder. 
+Pocket Frogs resource — 45,264 combinations, weekly sets, and frog builder. 
+
+Game data mirrors **3.20.1**. For pulling content out of a newer release, see [UPDATING.md](UPDATING.md).
 
 ## Rendering pipeline
 - **Layer order matters.** `renderFrog` always draws the grayscale `frog_base_256.png`, then the genus mask, then `overlay_256.png`. Each layer is retinted by drawing it into a tiny canvas, adjusting the pixel colors (base uses the `COLORS` table, genus uses `PATTERN_COLORS`) and painting that result into the preview canvas.
@@ -23,6 +25,12 @@ The layer order differs by genus because that is how the game itself composites 
 Porto is the special case: its genus layer (the frog body) renders *above* the shading overlay, with the extra layer on top of that. All other third-layer genera follow the standard order with the extra layer slotted in before the overlay.
 
 The set of genera that have a third layer is tracked in `EXTRA_LAYER_GENERA` (a `Set` in both `index.html` and `api/og.js`). Add a genus ID there and drop the corresponding `frog_<id>_extra_256.png` into `frog_sprites/` to enable it.
+
+## Animated genera
+
+Flagro (120 → genus **122**) doesn't take a flat pattern colour at all. Its genus mask is filled with a tiled flame texture (`frog_122_anim.png`) that scrolls vertically, so the markings visibly flicker. `_drawScrollingGenus` builds one tile at `cell / scale` pixels, fills the mask with it at an animated offset, multiplies by the pattern colour, then keeps the mask's own shading with a `multiply` pass before clipping to its alpha with `destination-in`.
+
+The config lives in `ANIMATED_GENERA` (again in both `index.html` and `api/og.js`) and mirrors `animatedPatternTable.csv` from the game. Animated frogs register in `chromaCanvases` alongside Chroma ones, so a single `requestAnimationFrame` loop drives both and the existing scroll-out cleanup applies unchanged — a Flagro frog with the Chroma pattern gets both effects at once. Server-side, `api/og.js` routes these through the GIF encoder so Discord embeds animate too.
 
 ## Sprite management and caching
 - `loadSprite` keeps a promise cache so each `Image` only downloads once, and every sprite is fetched from `frog_sprites/` with `crossOrigin='anonymous'`. That promise is reused anywhere `renderFrog` needs the base, genus, or overlay textures, which was critical when dozens of species canvases try to draw simultaneously.

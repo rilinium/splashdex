@@ -9,7 +9,7 @@
   <!-- Open Graph / Discord embed -->
   <meta property="og:type"        content="website">
   <meta property="og:title"       content="Splashdex">
-  <meta property="og:description" content="Pocket Frogs breed reference — 44,528 combinations, weekly sets, and frog builder.">
+  <meta property="og:description" content="Pocket Frogs breed reference — 45,264 combinations, weekly sets, and frog builder.">
   <meta property="og:image"       content="https://rilinium.github.io/splashdex/embedbanner.png">
   <meta property="og:url"         content="https://rilinium.github.io/splashdex/">
   <meta name="twitter:card"       content="summary_large_image">
@@ -421,11 +421,11 @@
 <header class="hdr">
   <img src="Splashdex.svg" alt="Splashdex" class="hdr-logo">
   <div class="hdr-right">
-    23 colors · 16 patterns · 121 genera<br>
-    44,528 total combinations
+    23 colors · 16 patterns · 123 genera<br>
+    45,264 total combinations
   </div>
 </header>
-<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.4.0 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
+<div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.5.0 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
 
 <nav class="tabs">
   <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
@@ -493,7 +493,7 @@
         <strong style="color:var(--cream)">1. Base layer</strong> — a grayscale frog silhouette, tinted with the body color.<br>
         <strong style="color:var(--cream)">2. Genus layer</strong> — genus-specific markings (spots, stripes, etc.), tinted with the pattern color.<br>
         <strong style="color:var(--cream)">3. Overlay</strong> — a shading mask applied with a hard-light blend to add depth and restore eye whites.<br>
-        Special: <em>Chroma</em> pattern animates through the full RGB spectrum. <em>Glass</em> color makes the frog semi-transparent.
+        Special: <em>Chroma</em> pattern animates through the full RGB spectrum. <em>Glass</em> color makes the frog semi-transparent. <em>Flagro</em> fills its markings with a scrolling flame texture instead of a flat color.
       </p>
     </div>
   </div>
@@ -822,118 +822,121 @@ const GENERA = {
   108:"Inverso",  109:"Exclamo",  110:"Imbris",   111:"Pompeius",
   112:"Conexus",  113:"Cerebrum", 114:"Garcius",  115:"Porto",
   116:"Florens",  117:"Topologia",118:"Losgann",  119:"Triquetra",
-  120:"Paschali",
+  120:"Paschali", 121:"Tempero",  122:"Flagro",
 };
 
 // FROG_TYPES: typeId → [colorId, genusId, patternId, name]
 // (Note: index order is color, GENUS, pattern — different from d[] in save data)
 const FROG_TYPES = {
-    0:[0,0,6,"Green Anura"],              1:[1,0,7,"Cocos Anura"],
-    2:[2,0,10,"Beige Anura"],             3:[3,0,4,"Orange Anura"],
-    4:[4,0,11,"Red Anura"],               5:[12,0,13,"Purple Anura"],
-    6:[13,0,5,"Golden Anura"],            7:[17,0,1,"Black Anura"],
-    8:[19,0,3,"White Anura"],             9:[6,2,1,"Azure Picea Crustalli"],
-   10:[4,2,11,"Red Tingo Crustalli"],    11:[0,2,6,"Green Folium Crustalli"],
-   12:[3,2,5,"Orange Aurum Crustalli"],  13:[16,2,1,"Pink Picea Crustalli"],
-   14:[7,3,1,"Violet Picea Velatus"],    15:[8,3,1,"Emerald Picea Velatus"],
-   16:[2,3,14,"Beige Cafea Velatus"],    17:[21,3,7,"Olive Bruna Velatus"],
-   18:[20,3,1,"Marine Picea Velatus"],   19:[13,3,3,"Golden Albeo Velatus"],
-   20:[4,3,8,"Red Pruni Velatus"],       21:[5,4,0,"Lime Callaina Clunicula"],
-   22:[9,4,2,"Tangelo Caelus Clunicula"],23:[14,4,8,"Royal Pruni Clunicula"],
-   24:[3,4,4,"Orange Carota Clunicula"], 25:[2,4,7,"Beige Bruna Clunicula"],
-   26:[17,4,6,"Black Folium Clunicula"], 27:[4,5,3,"Red Albeo Marmorea"],
-   28:[0,5,8,"Green Pruni Marmorea"],    29:[20,5,6,"Marine Folium Marmorea"],
-   30:[1,5,10,"Cocos Ceres Marmorea"],   31:[13,5,1,"Golden Picea Marmorea"],
-   32:[17,5,1,"Black Picea Marmorea"],   33:[3,9,7,"Orange Bruna Puncti"],
-   34:[14,9,8,"Royal Pruni Puncti"],     35:[17,9,9,"Black Muscus Puncti"],
-   36:[18,9,10,"Maroon Ceres Puncti"],   37:[21,9,14,"Olive Cafea Puncti"],
-   38:[8,10,1,"Emerald Picea Zebrae"],   39:[19,10,1,"White Picea Zebrae"],
-   40:[17,10,4,"Black Carota Zebrae"],   41:[3,10,11,"Orange Tingo Zebrae"],
-   42:[2,10,7,"Beige Bruna Zebrae"],     43:[0,14,6,"Green Folium Adamantis"],
-   44:[1,14,5,"Cocos Aurum Adamantis"],  45:[4,14,3,"Red Albeo Adamantis"],
-   46:[6,14,1,"Azure Picea Adamantis"],  47:[17,14,9,"Black Muscus Adamantis"],
-   48:[9,14,13,"Tangelo Viola Adamantis"],49:[3,15,7,"Orange Bruna Africanus"],
-   50:[18,15,4,"Maroon Carota Africanus"],51:[6,15,0,"Azure Callaina Africanus"],
-   52:[17,15,1,"Black Picea Africanus"], 53:[0,15,6,"Green Folium Africanus"],
-   54:[4,1,1,"Red Picea Partiri"],       55:[15,1,1,"Blue Picea Partiri"],
-   56:[3,1,1,"Orange Picea Partiri"],    57:[5,1,1,"Lime Picea Partiri"],
-   58:[16,1,1,"Pink Picea Partiri"],     59:[5,1,9,"Lime Muscus Partiri"],
-   60:[12,1,13,"Purple Viola Partiri"],  61:[6,1,2,"Azure Caelus Partiri"],
-   62:[19,1,4,"White Carota Partiri"],   63:[1,1,7,"Cocos Bruna Partiri"],
-   64:[11,7,4,"Aqua Carota Nasus"],      65:[7,7,8,"Violet Pruni Nasus"],
-   66:[0,7,13,"Green Viola Nasus"],      67:[2,7,14,"Beige Cafea Nasus"],
-   68:[15,7,1,"Blue Picea Nasus"],       69:[13,7,2,"Golden Caelus Nasus"],
-   70:[12,13,12,"Purple Floris Roboris"],71:[20,13,6,"Marine Folium Roboris"],
-   72:[13,13,3,"Golden Albeo Roboris"],  73:[19,13,11,"White Tingo Roboris"],
-   74:[1,13,6,"Cocos Folium Roboris"],   75:[18,17,4,"Maroon Carota Bovis"],
-   76:[8,17,7,"Emerald Bruna Bovis"],    77:[19,17,1,"White Picea Bovis"],
-   78:[16,17,3,"Pink Albeo Bovis"],      79:[21,17,14,"Olive Cafea Bovis"],
-   80:[10,6,2,"Yellow Caelus Mixtus"],   81:[7,6,13,"Violet Viola Mixtus"],
-   82:[8,6,4,"Emerald Carota Mixtus"],   83:[20,6,2,"Marine Caelus Mixtus"],
-   84:[3,6,1,"Orange Picea Mixtus"],     85:[4,6,3,"Red Albeo Mixtus"],
-   86:[6,11,4,"Azure Carota Calyx"],     87:[4,11,5,"Red Aurum Calyx"],
-   88:[2,11,6,"Beige Folium Calyx"],     89:[12,11,12,"Purple Floris Calyx"],
-   90:[5,11,0,"Lime Callaina Calyx"],    91:[17,18,11,"Black Tingo Viduo"],
-   92:[1,18,5,"Cocos Aurum Viduo"],      93:[7,18,8,"Violet Pruni Viduo"],
-   94:[13,18,3,"Golden Albeo Viduo"],    95:[8,18,0,"Emerald Callaina Viduo"],
-   96:[14,8,5,"Royal Aurum Stellata"],   97:[13,8,3,"Golden Albeo Stellata"],
-   98:[0,8,6,"Green Folium Stellata"],   99:[19,8,0,"White Callaina Stellata"],
-  100:[21,8,3,"Olive Albeo Stellata"],  101:[17,8,12,"Black Floris Stellata"],
-  102:[0,16,6,"Green Folium Serpentis"],103:[17,16,13,"Black Viola Serpentis"],
-  104:[14,16,1,"Royal Picea Serpentis"],105:[15,16,0,"Blue Callaina Serpentis"],
-  106:[18,16,3,"Maroon Albeo Serpentis"],107:[20,19,3,"Marine Albeo Spinae"],
-  108:[17,19,6,"Black Folium Spinae"],  109:[19,19,2,"White Caelus Spinae"],
-  110:[15,19,5,"Blue Aurum Spinae"],    111:[4,19,8,"Red Pruni Spinae"],
-  112:[17,12,6,"Black Folium Nimbilis"],113:[5,12,1,"Lime Picea Nimbilis"],
-  114:[4,12,4,"Red Carota Nimbilis"],   115:[7,12,3,"Violet Albeo Nimbilis"],
-  116:[13,12,7,"Golden Bruna Nimbilis"],117:[16,20,1,"Pink Picea Cesti"],
-  118:[18,20,5,"Maroon Aurum Cesti"],   119:[17,20,6,"Black Folium Cesti"],
-  120:[5,20,2,"Lime Caelus Cesti"],     121:[19,20,4,"White Carota Cesti"],
-  122:[10,2,8,"Yellow Pruni Crustalli"],123:[10,4,12,"Yellow Floris Clunicula"],
-  124:[10,6,13,"Yellow Viola Mixtus"],  125:[9,6,2,"Tangelo Caelus Mixtus"],
-  126:[9,3,5,"Tangelo Aurum Velatus"],  127:[11,0,0,"Aqua Anura"],
-  128:[11,9,4,"Aqua Carota Puncti"],    129:[11,10,14,"Aqua Cafea Zebrae"],
-  130:[21,5,9,"Olive Muscus Marmorea"], 131:[16,11,10,"Pink Ceres Calyx"],
-  132:[4,21,3,"Red Albeo Sagitta"],     133:[12,22,4,"Purple Carota Amfractus"],
-  134:[20,23,1,"Marine Picea Ornatus"], 135:[18,24,5,"Maroon Aurum Sol"],
-  136:[5,25,2,"Lime Caelus Lucus"],     137:[17,26,12,"Black Floris Ligo"],
-  138:[7,27,0,"Violet Callaina Corona"],139:[1,28,6,"Cocos Folium Arbor"],
-  140:[1,29,6,"Ocularis"],              141:[1,30,6,"Insero"],
-  142:[1,31,6,"Biplex"],                143:[1,32,6,"Pingo"],
-  144:[1,33,6,"Calvaria"],              145:[1,34,6,"Floresco"],
-  146:[1,35,6,"Magus"],                 147:[1,36,6,"Veru"],
-  148:[1,53,6,"Templum"],               149:[1,54,6,"Papilio"],
-  150:[1,55,6,"Pluma"],                 151:[1,56,6,"Cornus"],
-  152:[1,57,6,"Volta"],                 153:[1,58,6,"Flecto"],
-  154:[1,59,6,"Figularis"],             155:[1,60,6,"Aceris"],
-  156:[1,61,6,"Lunaris"],               157:[1,62,6,"Tabula"],
-  158:[1,63,6,"Pictoris"],              159:[1,64,6,"Shelbus"],
-  160:[1,65,6,"Skeletos"],              161:[1,66,6,"Pyramis"],
-  162:[1,67,6,"Lotus"],                 163:[1,68,6,"Spira"],
-  164:[1,69,6,"Planeta"],               165:[1,70,6,"Mazeus"],
-  166:[1,71,6,"Palma"],                 167:[1,72,6,"Coclearis"],
-  168:[1,73,6,"Mustacium"],             169:[1,74,6,"Axis"],
-  170:[1,75,6,"Igneous"],               171:[1,76,6,"Infinitas"],
-  172:[1,77,6,"Nodare"],                173:[1,78,6,"Dimidius"],
-  174:[1,79,6,"Scutulata"],             175:[1,80,6,"Arcus"],
-  176:[1,81,6,"Botulus"],               177:[1,82,6,"Americano"],
-  178:[1,83,6,"Symphonia"],             179:[1,84,6,"Vicis"],
-  180:[1,85,6,"Janus"],                 181:[1,86,6,"Levar"],
-  182:[1,87,6,"Gemma"],                 183:[1,88,6,"Favus"],
-  184:[1,89,6,"Tessera"],               185:[1,90,6,"Pistrix"],
-  186:[1,91,6,"Nebula"],                187:[1,92,6,"Fractus"],
-  188:[1,93,6,"Hennae"],                189:[1,94,6,"Pulvillus"],
-  190:[1,95,6,"Quilta"],                191:[1,96,6,"Foramen"],
-  192:[1,97,6,"Emblema"],               193:[1,98,6,"Fortuno"],
-  194:[1,99,6,"Splendico"],             195:[1,100,6,"Hexas"],
-  196:[1,101,6,"Spargo"],               197:[1,102,6,"Latus"],
-  198:[1,103,6,"Lentium"],              199:[1,104,6,"Altilium"],
-  200:[1,105,6,"Procursus"],            201:[1,106,6,"Stillas"],
-  202:[1,107,6,"Inverso"],              203:[1,108,6,"Exclamo"],
-  204:[1,109,6,"Pompeius"],             205:[1,110,6,"Conexus"],
-  206:[1,111,6,"Cerebrum"],             207:[1,112,6,"Garcius"],
-  208:[1,113,6,"Porto"],                209:[1,114,6,"Florens"],
-  210:[1,115,6,"Topologia"],            211:[1,116,6,"Losgann"],
+  0:[0,0,6,"Green Anura"],                 1:[1,0,7,"Cocos Anura"],
+  2:[2,0,10,"Beige Anura"],                3:[3,0,4,"Orange Anura"],
+  4:[4,0,11,"Red Anura"],                  5:[12,0,13,"Purple Anura"],
+  6:[13,0,5,"Golden Anura"],               7:[17,0,1,"Black Anura"],
+  8:[19,0,3,"White Anura"],                9:[6,2,1,"Azure Picea Crustalli"],
+  10:[4,2,11,"Red Tingo Crustalli"],       11:[0,2,6,"Green Folium Crustalli"],
+  12:[3,2,5,"Orange Aurum Crustalli"],     13:[16,2,1,"Pink Picea Crustalli"],
+  14:[7,3,1,"Violet Picea Velatus"],       15:[8,3,1,"Emerald Picea Velatus"],
+  16:[2,3,14,"Beige Cafea Velatus"],       17:[21,3,7,"Olive Bruna Velatus"],
+  18:[20,3,1,"Marine Picea Velatus"],      19:[13,3,3,"Golden Albeo Velatus"],
+  20:[4,3,8,"Red Pruni Velatus"],          21:[5,4,0,"Lime Callaina Clunicula"],
+  22:[9,4,2,"Tangelo Caelus Clunicula"],   23:[14,4,8,"Royal Pruni Clunicula"],
+  24:[3,4,4,"Orange Carota Clunicula"],    25:[2,4,7,"Beige Bruna Clunicula"],
+  26:[17,4,6,"Black Folium Clunicula"],    27:[4,5,3,"Red Albeo Marmorea"],
+  28:[0,5,8,"Green Pruni Marmorea"],       29:[20,5,6,"Marine Folium Marmorea"],
+  30:[1,5,10,"Cocos Ceres Marmorea"],      31:[13,5,1,"Golden Picea Marmorea"],
+  32:[17,5,1,"Black Picea Marmorea"],      33:[3,9,7,"Orange Bruna Puncti"],
+  34:[14,9,8,"Royal Pruni Puncti"],        35:[17,9,9,"Black Muscus Puncti"],
+  36:[18,9,10,"Maroon Ceres Puncti"],      37:[21,9,14,"Olive Cafea Puncti"],
+  38:[8,10,1,"Emerald Picea Zebrae"],      39:[19,10,1,"White Picea Zebrae"],
+  40:[17,10,4,"Black Carota Zebrae"],      41:[3,10,11,"Orange Tingo Zebrae"],
+  42:[2,10,7,"Beige Bruna Zebrae"],        43:[0,14,6,"Green Folium Adamantis"],
+  44:[1,14,5,"Cocos Aurum Adamantis"],     45:[4,14,3,"Red Albeo Adamantis"],
+  46:[6,14,1,"Azure Picea Adamantis"],     47:[17,14,9,"Black Muscus Adamantis"],
+  48:[9,14,13,"Tangelo Viola Adamantis"],  49:[3,15,7,"Orange Bruna Africanus"],
+  50:[18,15,4,"Maroon Carota Africanus"],  51:[6,15,0,"Azure Callaina Africanus"],
+  52:[17,15,1,"Black Picea Africanus"],    53:[0,15,6,"Green Folium Africanus"],
+  54:[4,1,1,"Red Picea Partiri"],          55:[15,1,1,"Blue Picea Partiri"],
+  56:[3,1,1,"Orange Picea Partiri"],       57:[5,1,1,"Lime Picea Partiri"],
+  58:[16,1,1,"Pink Picea Partiri"],        59:[5,1,9,"Lime Muscus Partiri"],
+  60:[12,1,13,"Purple Viola Partiri"],     61:[6,1,2,"Azure Caelus Partiri"],
+  62:[19,1,4,"White Carota Partiri"],      63:[1,1,7,"Cocos Bruna Partiri"],
+  64:[11,7,4,"Aqua Carota Nasus"],         65:[7,7,8,"Violet Pruni Nasus"],
+  66:[0,7,13,"Green Viola Nasus"],         67:[2,7,14,"Beige Cafea Nasus"],
+  68:[15,7,1,"Blue Picea Nasus"],          69:[13,7,2,"Golden Caelus Nasus"],
+  70:[12,13,12,"Purple Floris Roboris"],   71:[20,13,6,"Marine Folium Roboris"],
+  72:[13,13,3,"Golden Albeo Roboris"],     73:[19,13,11,"White Tingo Roboris"],
+  74:[1,13,6,"Cocos Folium Roboris"],      75:[18,17,4,"Maroon Carota Bovis"],
+  76:[8,17,7,"Emerald Bruna Bovis"],       77:[19,17,1,"White Picea Bovis"],
+  78:[16,17,3,"Pink Albeo Bovis"],         79:[21,17,14,"Olive Cafea Bovis"],
+  80:[10,6,2,"Yellow Caelus Mixtus"],      81:[7,6,13,"Violet Viola Mixtus"],
+  82:[8,6,4,"Emerald Carota Mixtus"],      83:[20,6,2,"Marine Caelus Mixtus"],
+  84:[3,6,1,"Orange Picea Mixtus"],        85:[4,6,3,"Red Albeo Mixtus"],
+  86:[6,11,4,"Azure Carota Calyx"],        87:[4,11,5,"Red Aurum Calyx"],
+  88:[2,11,6,"Beige Folium Calyx"],        89:[12,11,12,"Purple Floris Calyx"],
+  90:[5,11,0,"Lime Callaina Calyx"],       91:[17,18,11,"Black Tingo Viduo"],
+  92:[1,18,5,"Cocos Aurum Viduo"],         93:[7,18,8,"Violet Pruni Viduo"],
+  94:[13,18,3,"Golden Albeo Viduo"],       95:[8,18,0,"Emerald Callaina Viduo"],
+  96:[14,8,5,"Royal Aurum Stellata"],      97:[13,8,3,"Golden Albeo Stellata"],
+  98:[0,8,6,"Green Folium Stellata"],      99:[19,8,0,"White Callaina Stellata"],
+  100:[21,8,3,"Olive Albeo Stellata"],     101:[17,8,12,"Black Floris Stellata"],
+  102:[0,16,6,"Green Folium Serpentis"],   103:[17,16,13,"Black Viola Serpentis"],
+  104:[14,16,1,"Royal Picea Serpentis"],   105:[15,16,0,"Blue Callaina Serpentis"],
+  106:[18,16,3,"Maroon Albeo Serpentis"],  107:[20,19,3,"Marine Albeo Spinae"],
+  108:[17,19,6,"Black Folium Spinae"],     109:[19,19,2,"White Caelus Spinae"],
+  110:[15,19,5,"Blue Aurum Spinae"],       111:[4,19,8,"Red Pruni Spinae"],
+  112:[17,12,6,"Black Folium Nimbilis"],   113:[5,12,1,"Lime Picea Nimbilis"],
+  114:[4,12,4,"Red Carota Nimbilis"],      115:[7,12,3,"Violet Albeo Nimbilis"],
+  116:[13,12,7,"Golden Bruna Nimbilis"],   117:[16,20,1,"Pink Picea Cesti"],
+  118:[18,20,5,"Maroon Aurum Cesti"],      119:[17,20,6,"Black Folium Cesti"],
+  120:[5,20,2,"Lime Caelus Cesti"],        121:[19,20,4,"White Carota Cesti"],
+  122:[10,2,8,"Yellow Pruni Crustalli"],   123:[10,4,12,"Yellow Floris Clunicula"],
+  124:[10,6,13,"Yellow Viola Mixtus"],     125:[9,6,2,"Tangelo Caelus Mixtus"],
+  126:[9,3,5,"Tangelo Aurum Velatus"],     127:[11,0,0,"Aqua Anura"],
+  128:[11,9,4,"Aqua Carota Puncti"],       129:[11,10,14,"Aqua Cafea Zebrae"],
+  130:[21,5,9,"Olive Muscus Marmorea"],    131:[16,11,10,"Pink Ceres Calyx"],
+  132:[4,21,3,"Red Albeo Sagitta"],        133:[12,22,4,"Purple Carota Amfractus"],
+  134:[20,23,1,"Marine Picea Ornatus"],    135:[18,24,5,"Maroon Aurum Sol"],
+  136:[5,25,2,"Lime Caelus Lucus"],        137:[17,26,12,"Black Floris Ligo"],
+  138:[7,27,0,"Violet Callaina Corona"],   139:[1,28,6,"Cocos Folium Arbor"],
+  140:[1,29,6,"Ocularis"],                 141:[1,30,6,"Insero"],
+  142:[1,31,6,"Biplex"],                   143:[1,32,6,"Pingo"],
+  144:[1,33,6,"Calvaria"],                 145:[1,34,6,"Floresco"],
+  146:[1,35,6,"Magus"],                    147:[1,36,6,"Veru"],
+  148:[1,53,6,"Templum"],                  149:[1,54,6,"Papilio"],
+  150:[1,55,6,"Pluma"],                    151:[1,56,6,"Cornus"],
+  152:[1,57,6,"Volta"],                    153:[1,58,6,"Flecto"],
+  154:[1,59,6,"Figularis"],                155:[1,60,6,"Aceris"],
+  156:[1,61,6,"Lunaris"],                  157:[1,62,6,"Tabula"],
+  158:[1,63,6,"Pictoris"],                 159:[1,64,6,"Shelbus"],
+  160:[1,65,6,"Skeletos"],                 161:[1,66,6,"Pyramis"],
+  162:[1,67,6,"Lotus"],                    163:[1,68,6,"Spira"],
+  164:[1,69,6,"Planeta"],                  165:[1,70,6,"Mazeus"],
+  166:[1,71,6,"Palma"],                    167:[1,72,6,"Coclearis"],
+  168:[1,73,6,"Mustacium"],                169:[1,74,6,"Axis"],
+  170:[1,75,6,"Igneous"],                  171:[1,76,6,"Infinitas"],
+  172:[1,77,6,"Nodare"],                   173:[1,78,6,"Dimidius"],
+  174:[1,79,6,"Scutulata"],                175:[1,80,6,"Arcus"],
+  176:[1,81,6,"Botulus"],                  177:[1,82,6,"Americano"],
+  178:[1,83,6,"Symphonia"],                179:[1,84,6,"Vicis"],
+  180:[1,85,6,"Janus"],                    181:[1,86,6,"Levar"],
+  182:[1,87,6,"Gemma"],                    183:[1,88,6,"Favus"],
+  184:[1,89,6,"Tessera"],                  185:[1,90,6,"Palma"],
+  186:[1,91,6,"Pistrix"],                  187:[1,92,6,"Nebula"],
+  188:[1,93,6,"Fractus"],                  189:[1,94,6,"Hennae"],
+  190:[1,95,6,"Pulvillus"],                191:[1,96,6,"Quilta"],
+  192:[1,97,6,"Foramen"],                  193:[1,98,6,"Emblema"],
+  194:[1,99,6,"Fortuno"],                  195:[1,100,6,"Splendico"],
+  196:[1,101,6,"Hexas"],                   197:[1,102,6,"Spargo"],
+  198:[1,103,6,"Latus"],                   199:[1,104,6,"Lentium"],
+  200:[1,105,6,"Altilium"],                201:[1,106,6,"Procursus"],
+  202:[1,107,6,"Stillas"],                 203:[1,108,6,"Inverso"],
+  204:[1,109,6,"Exclamo"],                 205:[1,111,6,"Pompeius"],
+  206:[1,112,6,"Conexus"],                 207:[1,113,6,"Cerebrum"],
+  208:[1,114,6,"Garcius"],                 209:[1,115,6,"Porto"],
+  210:[1,116,6,"Florens"],                 211:[1,117,6,"Topologia"],
+  212:[1,118,6,"Losgann"],                 213:[1,119,6,"Triquetra"],
+  214:[1,120,6,"Paschali"],                215:[1,121,6,"Tempero"],
+  216:[1,122,6,"Flagro"],
 };
 
 // Sprite directory — adjust this if you move sprites elsewhere
@@ -941,6 +944,13 @@ const SPRITES = 'frog_sprites/';
 
 // Genera that have an extra (third) layer that renders without tinting
 const EXTRA_LAYER_GENERA = new Set([115, 116, 119, 120]);
+
+// Genera whose pattern layer is a scrolling tiled texture rather than a flat tint.
+// Mirrors animatedPatternTable.csv in the game data: speed is UV units per second,
+// scaleX/scaleY are how many times the texture repeats across the 256px frog cell.
+const ANIMATED_GENERA = {
+  122: { texture: 'frog_122_anim.png', speed: 0.25, scaleX: 1.35, scaleY: 1.0 },
+};
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Sprite Rendering Engine (ported from pf_editor_web.py)
@@ -1032,19 +1042,68 @@ function hsvToRgb(h, s, v) {
 const chromaCanvases = new Map();
 let chromaHue = 0;
 
-function _renderChromaFrame(entry) {
-  const { ctx, baseImg, genusImg, ovImg, extraImg, genusId, cr, cg, cb, w, h, isGlass } = entry;
-  const [pr, pg, pb] = hsvToRgb(chromaHue, 1, 1);
+// Fills the genus mask with a tiled, vertically scrolling texture (Flagro's flames) instead
+// of a flat colour. cfg is a row of ANIMATED_GENERA; tSec is a monotonic clock in seconds.
+function _drawScrollingGenus(ctx, genusImg, animImg, cfg, w, h, r, g, b, tSec) {
+  const tmp = document.createElement('canvas');
+  tmp.width = w; tmp.height = h;
+  const tctx = tmp.getContext('2d');
+
+  const tileW = Math.max(1, Math.round(w / cfg.scaleX));
+  const tileH = Math.max(1, Math.round(h / cfg.scaleY));
+  const tile = document.createElement('canvas');
+  tile.width = tileW; tile.height = tileH;
+  tile.getContext('2d').drawImage(animImg, 0, 0, tileW, tileH);
+
+  // Shift the pattern origin upward so the flames read as rising.
+  const off = ((tSec * cfg.speed) % 1) * tileH;
+  tctx.save();
+  tctx.translate(0, -off);
+  tctx.fillStyle = tctx.createPattern(tile, 'repeat');
+  tctx.fillRect(0, off, w, h);
+  tctx.restore();
+
+  const id = tctx.getImageData(0, 0, w, h);
+  const d = id.data;
+  for (let i = 0; i < d.length; i += 4) {
+    d[i]   = d[i]   * r / 255;
+    d[i+1] = d[i+1] * g / 255;
+    d[i+2] = d[i+2] * b / 255;
+  }
+  tctx.putImageData(id, 0, 0);
+
+  // Keep the mask's own shading, then clip the flames to its alpha.
+  tctx.globalCompositeOperation = 'multiply';
+  tctx.drawImage(genusImg, 0, 0, 256, 256, 0, 0, w, h);
+  tctx.globalCompositeOperation = 'destination-in';
+  tctx.drawImage(genusImg, 0, 0, 256, 256, 0, 0, w, h);
+
+  ctx.drawImage(tmp, 0, 0);
+}
+
+// Draws one frame of a frog. Static frogs go through here once; Chroma and animated-texture
+// genera stay registered in chromaCanvases and are redrawn every rAF tick.
+function _renderFrogFrame(entry, tSec) {
+  const { ctx, baseImg, genusImg, ovImg, extraImg, animImg, animCfg,
+          genusId, cr, cg, cb, w, h, isGlass, isChroma } = entry;
+  const [pr, pg, pb] = isChroma ? hsvToRgb(chromaHue, 1, 1) : [entry.pr, entry.pg, entry.pb];
+
   ctx.clearRect(0, 0, w, h);
   if (isGlass) ctx.globalAlpha = 0.5;
   _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, w, h, cr, cg, cb);
   ctx.globalAlpha = 1.0;
+
+  const drawGenus = () => {
+    if (animCfg && animImg) _drawScrollingGenus(ctx, genusImg, animImg, animCfg, w, h, pr, pg, pb, tSec);
+    else                    _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
+  };
+
   if (genusId === 115) {
     _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
-    _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
+    drawGenus();
     if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
   } else {
-    _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
+    drawGenus();
     if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
     _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
   }
@@ -1052,9 +1111,10 @@ function _renderChromaFrame(entry) {
 
 function animateChroma() {
   chromaHue = (chromaHue + 0.002) % 1;
+  const tSec = performance.now() / 1000;
   chromaCanvases.forEach((entry, canvas) => {
     if (!document.contains(canvas)) { chromaCanvases.delete(canvas); return; }
-    _renderChromaFrame(entry);
+    _renderFrogFrame(entry, tSec);
   });
   requestAnimationFrame(animateChroma);
 }
@@ -1081,33 +1141,21 @@ function renderFrog(canvas, colorId, patternId, genusId) {
   }
   const w = canvas.width, h = canvas.height;
 
-  const spritePromises = [
+  const animCfg = ANIMATED_GENERA[genusId] || null;
+  Promise.all([
     loadSprite('frog_base_256.png'),
     loadSprite('frog_' + genusId + '_256.png'),
     loadSprite('overlay_256.png'),
-  ];
-  if (EXTRA_LAYER_GENERA.has(genusId)) spritePromises.push(loadSprite('frog_' + genusId + '_extra_256.png'));
-  Promise.all(spritePromises).then(([baseImg, genusImg, ovImg, extraImg]) => {
+    EXTRA_LAYER_GENERA.has(genusId) ? loadSprite('frog_' + genusId + '_extra_256.png') : null,
+    animCfg ? loadSprite(animCfg.texture) : null,
+  ]).then(([baseImg, genusImg, ovImg, extraImg, animImg]) => {
     const ctx = canvas.getContext('2d');
-    if (isChroma) {
-      chromaCanvases.set(canvas, { ctx, baseImg, genusImg, ovImg, extraImg, genusId, cr, cg, cb, w, h, isGlass });
-      _renderChromaFrame(chromaCanvases.get(canvas));
-    } else {
-      chromaCanvases.delete(canvas);
-      ctx.clearRect(0, 0, w, h);
-      if (isGlass) ctx.globalAlpha = 0.5;
-      _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, w, h, cr, cg, cb);
-      ctx.globalAlpha = 1.0;
-      if (genusId === 115) {
-        _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
-        _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
-        if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
-      } else {
-        _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, w, h, pr, pg, pb);
-        if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
-        _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, w, h);
-      }
-    }
+    const entry = { ctx, baseImg, genusImg, ovImg, extraImg, animImg, animCfg,
+                    genusId, cr, cg, cb, pr, pg, pb, w, h, isGlass, isChroma };
+    // Only frogs that actually move stay registered for the rAF loop.
+    if (isChroma || animCfg) chromaCanvases.set(canvas, entry);
+    else                     chromaCanvases.delete(canvas);
+    _renderFrogFrame(entry, performance.now() / 1000);
   }).catch(() => _drawFrogPlaceholder(canvas));
 }
 
@@ -2243,29 +2291,19 @@ function _renderFrogOffscreen(colorId, patternId, genusId, size) {
   const canvas = document.createElement('canvas');
   canvas.width = size; canvas.height = size;
   const ctx = canvas.getContext('2d');
-  const spriteList = [
+  const animCfg = ANIMATED_GENERA[genusId] || null;
+  return Promise.all([
     loadSprite('frog_base_256.png'),
     loadSprite('frog_' + genusId + '_256.png'),
     loadSprite('overlay_256.png'),
-  ];
-  if (EXTRA_LAYER_GENERA.has(genusId)) spriteList.push(loadSprite('frog_' + genusId + '_extra_256.png'));
-  return Promise.all(spriteList).then(([baseImg, genusImg, ovImg, extraImg]) => {
-    const [effPr, effPg, effPb] = isChroma ? hsvToRgb(chromaHue, 1, 1) : [pr, pg, pb];
-    ctx.clearRect(0, 0, size, size);
-    if (isGlass) ctx.globalAlpha = 0.5;
-    _tintLayer(ctx, baseImg,  0, 0, 256, 256, 0, 0, size, size, cr, cg, cb);
-    ctx.globalAlpha = 1.0;
-    if (genusId === 115) {
-      // Porto: base → overlay → genus → extra
-      _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, size, size);
-      _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, size, size, effPr, effPg, effPb);
-      if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, size, size);
-    } else {
-      // Normal / Florens / Triquetra: base → genus → extra → overlay
-      _tintLayer(ctx, genusImg, 0, 0, 256, 256, 0, 0, size, size, effPr, effPg, effPb);
-      if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, size, size);
-      _multiplyOverlay(ctx, ovImg, 0, 0, 256, 256, 0, 0, size, size);
-    }
+    EXTRA_LAYER_GENERA.has(genusId) ? loadSprite('frog_' + genusId + '_extra_256.png') : null,
+    animCfg ? loadSprite(animCfg.texture) : null,
+  ]).then(([baseImg, genusImg, ovImg, extraImg, animImg]) => {
+    // Exports freeze whatever frame the animated genera are on right now.
+    _renderFrogFrame({ ctx, baseImg, genusImg, ovImg, extraImg, animImg, animCfg,
+                       genusId, cr, cg, cb, pr, pg, pb,
+                       w: size, h: size, isGlass, isChroma },
+                     performance.now() / 1000);
     return canvas;
   });
 }
@@ -2444,7 +2482,7 @@ const SCENERY_STAT_OVERRIDES = {
 };
 
 // [id, name, level, filename, seasonal?]
-// Data from game's scenery.csv (v3.15.0); metadata cross-referenced with
+// Data from game's scenery.csv (v3.20.1); metadata cross-referenced with
 // Pocket Frogs Habitat Tracker by @kielasandros (Discord)
 const SCENERY_DATA = [
   [0,'Small Maple Leaf',1,'scenery_0.png'],
@@ -2594,6 +2632,44 @@ const SCENERY_DATA = [
   [276,'Marshmallow Bunny',9,'scenery_146.png',true],
   [277,'Painted Egg',9,'scenery_147.png',true],
   [278,'Tulip',9,'scenery_148.png',true],
+  [280,'Glass Pebble',9,'scenery_149.png',true],
+  [281,'Forget Me Not',9,'scenery_150.png',true],
+  [282,'Blue Agate',9,'scenery_151.png',true],
+  [283,'Blue Bottle',9,'scenery_152.png',true],
+  [285,'Marigold',9,'scenery_153.png',true],
+  [286,'Red Pepper',9,'scenery_154.png',true],
+  [287,'Record (Corridos)',9,'scenery_155.png',true],
+  [288,'Bumblebee',5,'scenery_156.png'],
+  [290,'Record (Flower Field)',9,'scenery_157.png',true],
+  [291,'Honeybee',5,'scenery_158.png'],
+  [292,'Honeycomb',7,'scenery_159.png'],
+  [293,'Red Sunflower',9,'scenery_160.png'],
+  [298,'Dandelion Seed',1,'scenery_161.png'],
+  [299,'Leaf Beetle',9,'scenery_162.png'],
+  [300,'Blue Butterfly',9,'scenery_163.png'],
+  [301,'Yellow Butterfly',9,'scenery_164.png'],
+  [302,'Slug',3,'scenery_165.png'],
+  [303,'Maple Seed',1,'scenery_166.png'],
+  [304,'Spicebush Caterpillar',9,'scenery_167.png'],
+  [305,'Monarch Caterpillar',8,'scenery_168.png'],
+  [306,'Chrysalis',9,'scenery_169.png'],
+  [307,'Monarch Butterfly',9,'scenery_170.png'],
+  [308,'Bird Nest',9,'scenery_171.png'],
+  [309,'Peace Petals',9,'scenery_175.png'],
+  [312,'Tumbleweed',1,'scenery_172.png'],
+  [313,'Rose Quartz',3,'scenery_173.png'],
+  [314,'Turquoise Stone',4,'scenery_174.png'],
+  [315,'Cactus Flower',5,'scenery_176.png'],
+  [316,'Large Cactus Flower',7,'scenery_177.png'],
+  [317,'Nopal',6,'scenery_178.png'],
+  [318,'Gold Flakes',9,'scenery_182.png'],
+  [319,'Joshua Branch',2,'scenery_183.png'],
+  [320,'Record (Dry Desert)',9,'scenery_184.png',true],
+  [321,'Raptor Claw',7,'scenery_185.png'],
+  [327,'Sphinx Moth',9,'scenery_186.png'],
+  [328,'Kingsnake',9,'scenery_181.png'],
+  [329,'Desert Tortoise',8,'scenery_180.png'],
+  [330,'Horned Lizard',8,'scenery_179.png'],
 ];
 
 function _sceneryStats(id, level) {
@@ -2683,7 +2759,8 @@ const GENUS_LEVEL = {
   77:25,78:25,79:25,80:26,81:26,82:26,83:27,84:27,85:27,86:28,87:28,88:28,
   89:29,90:29,91:29,92:30,93:30,94:30,95:31,96:31,97:31,98:32,99:32,100:32,
   101:33,102:33,103:33,104:34,105:34,106:34,107:35,108:35,109:35,110:30,
-  111:36,112:37,113:20,114:36,115:10,116:40,117:39,118:38,119:40,120:40
+  111:36,112:37,113:20,114:36,115:10,116:40,117:39,118:38,119:40,120:40,
+  121:15,122:50
 };
 
 function _dnaSpeedRange(level) {
