@@ -15,7 +15,7 @@ const SETS_PATH    = path.join(__dirname, '..', 'sets.txt');
 const CHROMA_ID  = 15;
 const EXTRA_LAYER_GENERA = new Set([115, 116, 119, 120]);
 const GIF_FRAMES = 16;
-const GIF_DELAY  = 160; // ms per frame → 2.56 s full cycle
+const GIF_DELAY  = 750; // ms per frame → 12.00 s full cycle
 
 
 // ── Sprite cache (warm across invocations in the same Lambda instance) ────────
