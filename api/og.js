@@ -14,6 +14,12 @@ const SETS_PATH    = path.join(__dirname, '..', 'sets.txt');
 
 const CHROMA_ID  = 15;
 const EXTRA_LAYER_GENERA = new Set([115, 116, 119, 120]);
+
+// Genera whose pattern layer is a scrolling tiled texture rather than a flat tint.
+// Mirrors ANIMATED_GENERA in index.html and animatedPatternTable.csv in the game data.
+const ANIMATED_GENERA = {
+  122: { texture: 'frog_122_anim.png', scaleX: 1.35, scaleY: 1.0 },
+};
 const GIF_FRAMES = 16;
 const GIF_DELAY  = 750; // ms per frame → 12.00 s full cycle
 
@@ -78,8 +84,45 @@ function _multiplyOverlay(ctx, img, dx, dy, dw, dh) {
   ctx.putImageData(cId, dx, dy);
 }
 
+// Fills the genus mask with a tiled, vertically scrolling texture (Flagro's flames).
+// phase is the loop position in [0, 1); one unit is a full tile of travel.
+function _drawScrollingGenus(ctx, genusImg, animImg, cfg, dw, dh, r, g, b, phase) {
+  const tmp = createCanvas(dw, dh);
+  const tc  = tmp.getContext('2d');
+
+  const tileW = Math.max(1, Math.round(dw / cfg.scaleX));
+  const tileH = Math.max(1, Math.round(dh / cfg.scaleY));
+  const tile  = createCanvas(tileW, tileH);
+  tile.getContext('2d').drawImage(animImg, 0, 0, tileW, tileH);
+
+  const off = (phase % 1) * tileH;
+  tc.save();
+  tc.translate(0, -off);
+  tc.fillStyle = tc.createPattern(tile, 'repeat');
+  tc.fillRect(0, off, dw, dh);
+  tc.restore();
+
+  const id = tc.getImageData(0, 0, dw, dh);
+  const d  = id.data;
+  for (let i = 0; i < d.length; i += 4) {
+    d[i]   = d[i]   * r / 255;
+    d[i+1] = d[i+1] * g / 255;
+    d[i+2] = d[i+2] * b / 255;
+  }
+  tc.putImageData(id, 0, 0);
+
+  // Keep the mask's own shading, then clip the flames to its alpha.
+  tc.globalCompositeOperation = 'multiply';
+  tc.drawImage(genusImg, 0, 0, 256, 256, 0, 0, dw, dh);
+  tc.globalCompositeOperation = 'destination-in';
+  tc.drawImage(genusImg, 0, 0, 256, 256, 0, 0, dw, dh);
+
+  ctx.drawImage(tmp, 0, 0);
+}
+
 // patternRgbOverride: [r, g, b] replaces PATTERN_COLORS[patternId] for this render
-async function renderFrog(canvas, colorId, patternId, genusId, patternRgbOverride) {
+// phase: loop position in [0, 1) for genera with a scrolling texture
+async function renderFrog(canvas, colorId, patternId, genusId, patternRgbOverride, phase = 0) {
   const isGlass = colorId === 22;
   const [, cr, cg, cb]   = COLORS[colorId]          || [null, 128, 128, 128];
   const [, pr0, pg0, pb0] = PATTERN_COLORS[patternId] || [null, 128, 128, 128];
@@ -87,13 +130,19 @@ async function renderFrog(canvas, colorId, patternId, genusId, patternRgbOverrid
   const w = canvas.width, h = canvas.height;
   const ctx = canvas.getContext('2d');
 
-  const spritePromises = [
+  const animCfg = ANIMATED_GENERA[genusId] || null;
+  const [baseImg, genusImg, ovImg, extraImg, animImg] = await Promise.all([
     getSprite('frog_base_256.png'),
     getSprite(`frog_${genusId}_256.png`),
     getSprite('overlay_256.png'),
-  ];
-  if (EXTRA_LAYER_GENERA.has(genusId)) spritePromises.push(getSprite(`frog_${genusId}_extra_256.png`));
-  const [baseImg, genusImg, ovImg, extraImg] = await Promise.all(spritePromises);
+    EXTRA_LAYER_GENERA.has(genusId) ? getSprite(`frog_${genusId}_extra_256.png`) : null,
+    animCfg ? getSprite(animCfg.texture) : null,
+  ]);
+
+  const drawGenus = () => {
+    if (animCfg && animImg) _drawScrollingGenus(ctx, genusImg, animImg, animCfg, w, h, pr, pg, pb, phase);
+    else                    _tintLayer(ctx, genusImg, 0, 0, w, h, pr, pg, pb);
+  };
 
   ctx.clearRect(0, 0, w, h);
   if (isGlass) ctx.globalAlpha = 0.5;
@@ -102,11 +151,11 @@ async function renderFrog(canvas, colorId, patternId, genusId, patternRgbOverrid
   if (genusId === 115) {
     // Porto: base → overlay → genus → extra
     _multiplyOverlay(ctx, ovImg, 0, 0, w, h);
-    _tintLayer(ctx, genusImg, 0, 0, w, h, pr, pg, pb);
+    drawGenus();
     if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
   } else {
     // Normal / Florens / Triquetra: base → genus → extra → overlay
-    _tintLayer(ctx, genusImg, 0, 0, w, h, pr, pg, pb);
+    drawGenus();
     if (extraImg) ctx.drawImage(extraImg, 0, 0, 256, 256, 0, 0, w, h);
     _multiplyOverlay(ctx, ovImg, 0, 0, w, h);
   }
@@ -189,19 +238,19 @@ module.exports = async (req, res) => {
       const SIZE = 512, PAD = 48;
       const W = SIZE + PAD * 2, H = SIZE + PAD * 2;
 
-      if (p === CHROMA_ID) {
-        // ── Animated GIF: cycle hue through the Chroma pattern layer ──────────
+      if (p === CHROMA_ID || ANIMATED_GENERA[g]) {
+        // ── Animated GIF: cycle the Chroma hue and/or scroll the genus texture ─
         const bgImg = await loadImage(FROGBG_PATH);
         const enc   = makeEncoder(W, H);
 
         for (let f = 0; f < GIF_FRAMES; f++) {
-          const hue = (f / GIF_FRAMES) * 360;
-          const rgb = hslToRgb(hue, 1.0, 0.55);
+          const phase = f / GIF_FRAMES;
+          const rgb   = p === CHROMA_ID ? hslToRgb(phase * 360, 1.0, 0.55) : null;
           const out = createCanvas(W, H);
           const ctx = out.getContext('2d');
           ctx.drawImage(bgImg, 0, 0, W, H);
           const frogCv = createCanvas(SIZE, SIZE);
-          await renderFrog(frogCv, c, p, g, rgb);
+          await renderFrog(frogCv, c, p, g, rgb, phase);
           ctx.drawImage(frogCv, PAD, PAD);
           enc.addFrame(ctx);
         }
@@ -257,13 +306,14 @@ module.exports = async (req, res) => {
       const W = totalW + H_PAD * 2, H = FROG_SIZE + V_PAD * 2;
       const pill = Math.floor(H / 2);
 
-      const hasChroma = slots.some(([, p]) => p === CHROMA_ID);
+      const isAnimated = (p, g) => p === CHROMA_ID || !!ANIMATED_GENERA[g];
+      const hasAnim    = slots.some(([, p, g]) => isAnimated(p, g));
 
-      if (hasChroma) {
+      if (hasAnim) {
         // ── Animated GIF ──────────────────────────────────────────────────────
-        // Pre-render static (non-Chroma) frogs once; Chroma frogs re-render per frame
+        // Pre-render fully static frogs once; animated ones re-render per frame
         const staticCanvases = await Promise.all(slots.map(([c, p, g]) => {
-          if (p === CHROMA_ID) return Promise.resolve(null); // placeholder
+          if (isAnimated(p, g)) return Promise.resolve(null); // placeholder
           const fc = createCanvas(FROG_SIZE, FROG_SIZE);
           return renderFrog(fc, c, p, g).then(() => fc);
         }));
@@ -271,14 +321,14 @@ module.exports = async (req, res) => {
         const enc = makeEncoder(W, H);
 
         for (let f = 0; f < GIF_FRAMES; f++) {
-          const hue = (f / GIF_FRAMES) * 360;
-          const rgb = hslToRgb(hue, 1.0, 0.55);
+          const phase = f / GIF_FRAMES;
+          const rgb   = hslToRgb(phase * 360, 1.0, 0.55);
 
-          // Render Chroma frogs for this frame
+          // Render the animated frogs for this frame
           const frameCanvases = await Promise.all(slots.map(([c, p, g], i) => {
-            if (p !== CHROMA_ID) return Promise.resolve(staticCanvases[i]);
+            if (!isAnimated(p, g)) return Promise.resolve(staticCanvases[i]);
             const fc = createCanvas(FROG_SIZE, FROG_SIZE);
-            return renderFrog(fc, c, p, g, rgb).then(() => fc);
+            return renderFrog(fc, c, p, g, p === CHROMA_ID ? rgb : null, phase).then(() => fc);
           }));
 
           const out = createCanvas(W, H);

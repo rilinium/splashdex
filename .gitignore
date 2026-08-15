@@ -1,0 +1,7 @@
+# Game binaries and anything unpacked from them — do not commit.
+*.apk
+*.xapk
+apk_extracted/
+
+node_modules/
+.DS_Store

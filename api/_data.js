@@ -85,6 +85,7 @@ const GENERA = {
   108: 'Inverso',   109: 'Exclamo',  110: 'Imbris',   111: 'Pompeius',
   112: 'Conexus',   113: 'Cerebrum', 114: 'Garcius',  115: 'Porto',
   116: 'Florens',   117: 'Topologia',118: 'Losgann',  119: 'Triquetra',
+  120: 'Paschali',  121: 'Tempero',  122: 'Flagro',
 };
 
 function frogFullName(colorId, patternId, genusId) {

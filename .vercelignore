@@ -1,0 +1,9 @@
+# Game binaries and anything unpacked from them — never deploy these.
+*.apk
+*.xapk
+apk_extracted/
+
+# Extraction tooling is a local dev aid, not part of the site.
+tools/
+
+node_modules/
