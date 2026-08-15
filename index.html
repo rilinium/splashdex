@@ -16,6 +16,23 @@
   <meta name="twitter:title"      content="Splashdex">
   <meta name="twitter:image"      content="https://rilinium.github.io/splashdex/embedbanner.png">
   <style>
+    /* ── Type: IBM Plex Sans (UI) + IBM Plex Mono (breed/set data codes) ── */
+    @font-face {
+      font-family: 'IBM Plex Sans';
+      src: url('fonts/IBMPlexSans-Variable.woff2') format('woff2-variations'),
+           url('fonts/IBMPlexSans-Variable.woff2') format('woff2');
+      font-weight: 100 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'IBM Plex Mono';
+      src: url('fonts/IBMPlexMono-Regular.woff2') format('woff2');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
     /* ── Catppuccin Mocha ── */
     :root {
       --base:      #1e1e2e;
@@ -41,11 +58,31 @@
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ── View Transitions: tab switches cross-fade instead of cutting; a clicked
+       frog canvas (tagged 'frog-morph' in JS) flies into the Builder preview.
+       Browsers without support just skip startViewTransition() entirely — the
+       panels swap exactly as they did before this was added. ── */
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation-duration: .22s;
+      animation-timing-function: cubic-bezier(.22,1,.36,1);
+      animation-fill-mode: both;
+    }
+    ::view-transition-old(root) { animation-name: sd-panel-out; }
+    ::view-transition-new(root) { animation-name: sd-panel-in; }
+    @keyframes sd-panel-out { to   { opacity: 0; transform: translateY(-6px); } }
+    @keyframes sd-panel-in  { from { opacity: 0; transform: translateY(6px);  } }
+    ::view-transition-group(frog-morph) {
+      animation-duration: .42s;
+      animation-timing-function: cubic-bezier(.16,1,.3,1);
+    }
+
     body {
       background: var(--base);
       color: var(--text);
-      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
       font-size: 14px;
+      line-height: 1.5;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -62,9 +99,9 @@
     .hdr-logo { height: 28px; width: auto; }
     .hdr-sub { font-size: 11px; color: var(--subtext0); }
     .hdr-right { margin-left: auto; font-size: 11px; color: var(--overlay1); text-align: right; }
-    .hdr-version { font-size: 10px; color: var(--overlay0); position: fixed; bottom: 8px; right: 10px; z-index: 100; }
-    .hdr-version a { color: var(--overlay1); text-decoration: none; }
-    .hdr-version a:hover { color: var(--subtext0); text-decoration: underline; }
+    .hdr-version { font-size: 10px; color: var(--subtext0); position: fixed; bottom: 8px; right: 10px; z-index: 100; }
+    .hdr-version a { color: var(--subtext0); text-decoration: none; }
+    .hdr-version a:hover { color: var(--text); text-decoration: underline; }
 
     /* ── Tabs ── */
     .tabs {
@@ -79,6 +116,7 @@
       font-size: 13px; font-weight: 500;
       border-bottom: 2px solid transparent; margin-bottom: -1px;
       transition: color .15s, border-color .15s;
+      display: inline-flex; align-items: center; min-height: 44px;
     }
     .tab-btn:hover { color: var(--text); }
     .tab-btn.active { color: var(--mauve); border-bottom-color: var(--mauve); }
@@ -153,7 +191,7 @@
       background: var(--surface0); border: 1px solid var(--surface1);
       border-radius: 6px; padding: 6px 10px; margin-top: 10px;
     }
-    .dex-id-display strong { color: var(--text); }
+    .dex-id-display strong { color: var(--text); font-variant-numeric: tabular-nums; }
 
     /* ── Species grid ── */
     .species-toolbar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
@@ -165,14 +203,14 @@
       font-size: 13px; min-width: 200px; flex: 1;
     }
     .search-input:focus { outline: none; border-color: var(--mauve); }
-    .search-input::placeholder { color: var(--overlay0); }
+    .search-input::placeholder { color: var(--subtext0); }
     .filter-select {
       background: var(--surface0); border: 1px solid var(--surface1);
       border-radius: 6px; color: var(--text); padding: 7px 10px;
       font-size: 12px; cursor: pointer;
     }
     .filter-select option { background: var(--surface0); }
-    .count-lbl { font-size: 12px; color: var(--overlay1); white-space: nowrap; }
+    .count-lbl { font-size: 12px; color: var(--subtext0); white-space: nowrap; font-variant-numeric: tabular-nums; }
     .species-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -185,15 +223,16 @@
       cursor: pointer; transition: border-color .15s;
     }
     .species-card:hover { border-color: var(--mauve); }
+    .species-card:focus-visible { outline: 2px solid var(--mauve); outline-offset: 2px; border-color: var(--mauve); }
     .species-canvas { image-rendering: auto; }
     .species-name { font-size: 11px; font-weight: 500; color: var(--text); text-align: center; line-height: 1.3; }
-    .species-id { font-size: 10px; color: var(--overlay0); }
+    .species-id { font-size: 10px; color: var(--subtext0); font-variant-numeric: tabular-nums; }
     .breeds-pagination {
       display: flex; align-items: center; justify-content: center;
       gap: 10px; margin-top: 16px; flex-wrap: wrap;
     }
     .breeds-pagination .btn { min-width: 80px; }
-    .breeds-page-lbl { font-size: 12px; color: var(--overlay1); white-space: nowrap; }
+    .breeds-page-lbl { font-size: 12px; color: var(--subtext0); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
     /* ── Sets ── */
     .sets-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
@@ -214,8 +253,9 @@
       transition: border-color .15s;
     }
     .set-frog-tile:hover { border-color: var(--mauve); }
+    .set-frog-tile:focus-visible { outline: 2px solid var(--mauve); outline-offset: 2px; border-color: var(--mauve); }
     .set-frog-name { font-size: 10px; color: var(--subtext0); text-align: center; line-height: 1.3; }
-    .set-frog-count { font-size: 10px; font-weight: 700; color: var(--yellow); position: absolute; top: 4px; right: 4px; }
+    .set-frog-count { font-size: 10px; font-weight: 700; color: var(--yellow); position: absolute; top: 4px; right: 4px; font-variant-numeric: tabular-nums; }
     .set-frog-wrap { position: relative; }
     .status-loading { color: var(--subtext0); font-size: 13px; padding: 20px 0; }
     .status-error {
@@ -240,18 +280,26 @@
     .setbuilder-frog-controls { flex: 1; min-width: 200px; }
     .setbuilder-preview { flex: 1; min-width: 280px; }
     .sb-count-row { display: flex; align-items: center; gap: 10px; }
-    .sb-count-display { font-size: 16px; font-weight: 700; color: var(--text); min-width: 28px; text-align: center; }
-    .sb-empty-msg { color: var(--overlay0); font-size: 13px; font-style: italic; padding: 20px 0; }
+    .sb-count-row .btn {
+      min-width: 44px; min-height: 44px;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .sb-count-display { font-size: 16px; font-weight: 700; color: var(--text); min-width: 28px; text-align: center; font-variant-numeric: tabular-nums; }
+    .sb-empty-msg { color: var(--subtext0); font-size: 13px; font-style: italic; padding: 20px 0; }
     .sb-import-row { margin-top: 4px; }
     .sb-remove-btn {
       position: absolute; top: 2px; right: 2px;
-      width: 16px; height: 16px; border-radius: 50%;
+      width: 18px; height: 18px; border-radius: 50%;
       background: var(--red); color: var(--crust);
-      border: none; cursor: pointer; font-size: 10px; line-height: 1;
+      border: none; cursor: pointer; font-size: 11px; line-height: 1;
       display: flex; align-items: center; justify-content: center;
-      opacity: 0; transition: opacity .15s; padding: 0;
+      opacity: .65; transition: opacity .15s; padding: 0;
     }
-    .set-frog-tile:hover .sb-remove-btn { opacity: 1; }
+    .sb-remove-btn::before { content: ''; position: absolute; inset: -10px; }
+    .set-frog-tile:hover .sb-remove-btn,
+    .sb-remove-btn:hover,
+    .sb-remove-btn:focus-visible { opacity: 1; }
+    .sb-remove-btn:focus-visible { outline: 2px solid var(--mauve); outline-offset: 2px; }
 
     /* ── Game View ── */
     .set-game-strip {
@@ -281,6 +329,7 @@
       border: 1px solid var(--surface1); font-size: 12px;
       background: var(--surface0); color: var(--subtext0);
       transition: background .1s, color .1s;
+      display: inline-flex; align-items: center; min-height: 44px;
     }
     .view-toggle-btn.active { background: var(--surface1); color: var(--text); }
 
@@ -294,6 +343,7 @@
       background: var(--surface0); color: var(--subtext0);
       font-size: 11px; font-weight: 500;
       transition: background .1s, color .1s;
+      display: inline-flex; align-items: center; min-height: 44px;
     }
     .btn-export:hover { background: var(--surface1); color: var(--text); }
     .btn-export:active { opacity: .7; }
@@ -312,8 +362,8 @@
     .dna-results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .dna-stat-card { background: var(--surface0); border-radius: 10px; padding: 16px 12px; text-align: center; border: 1px solid var(--surface1); }
     .dna-stat-label { font-size: 10px; color: var(--subtext0); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; margin-bottom: 6px; }
-    .dna-stat-value { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; }
-    .dna-stat-range { font-size: 10px; color: var(--overlay1); margin-top: 5px; }
+    .dna-stat-value { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; font-variant-numeric: tabular-nums; }
+    .dna-stat-range { font-size: 10px; color: var(--subtext0); margin-top: 5px; font-variant-numeric: tabular-nums; }
     .dna-stat-bar-wrap { margin-top: 8px; background: var(--surface1); border-radius: 4px; height: 5px; overflow: hidden; }
     .dna-stat-bar { height: 100%; border-radius: 4px; transition: width .3s ease; }
     .dna-stat-bar.speed   { background: var(--blue); }
@@ -357,10 +407,10 @@
       font-size: 9px; color: var(--peach); font-weight: 600; letter-spacing: .3px;
     }
     .scenery-credit {
-      margin-top: 18px; font-size: 10px; color: var(--overlay0);
+      margin-top: 18px; font-size: 10px; color: var(--subtext0);
       text-align: center; line-height: 1.6;
     }
-    .scenery-credit a { color: var(--overlay1); text-decoration: none; }
+    .scenery-credit a { color: var(--subtext0); text-decoration: none; }
     .scenery-credit a:hover { color: var(--text); }
     @media (max-width: 600px) {
       .scenery-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 7px; }
@@ -427,21 +477,21 @@
 </header>
 <div class="hdr-version">splashdex by <a href="https://github.com/rilinium" target="_blank" rel="noopener">rilinium</a> · v1.5.0 · <span title="Splashdex is an unofficial fan tool and is not affiliated with, endorsed by, or associated with Pocket Frogs or Nimblebit LLC.">not affiliated with nimblebit</span></div>
 
-<nav class="tabs">
-  <button class="tab-btn active" onclick="tab('builder', this)">🔬 Frog Builder</button>
-  <button class="tab-btn"        onclick="tab('species', this)">🐸 Breeds</button>
-  <button class="tab-btn"        onclick="tab('setbuilder', this)">📋 Set Builder</button>
-  <button class="tab-btn"        onclick="tab('sets', this)">📅 Weekly Sets</button>
-  <button class="tab-btn"        onclick="tab('scenery', this)">🌿 Scenery (BETA)</button>
-  <button class="tab-btn"        onclick="tab('dna', this)">🧬 DNA Calculator</button>
+<nav class="tabs" role="tablist" aria-label="Splashdex sections">
+  <button class="tab-btn active" id="tabbtn-builder"    role="tab" aria-selected="true"  aria-controls="tab-builder"    onclick="tab('builder', this)">🔬 Frog Builder</button>
+  <button class="tab-btn"        id="tabbtn-species"    role="tab" aria-selected="false" aria-controls="tab-species"    onclick="tab('species', this)">🐸 Breeds</button>
+  <button class="tab-btn"        id="tabbtn-setbuilder" role="tab" aria-selected="false" aria-controls="tab-setbuilder" onclick="tab('setbuilder', this)">📋 Set Builder</button>
+  <button class="tab-btn"        id="tabbtn-sets"       role="tab" aria-selected="false" aria-controls="tab-sets"       onclick="tab('sets', this)">📅 Weekly Sets</button>
+  <button class="tab-btn"        id="tabbtn-scenery"    role="tab" aria-selected="false" aria-controls="tab-scenery"    onclick="tab('scenery', this)">🌿 Scenery (BETA)</button>
+  <button class="tab-btn"        id="tabbtn-dna"        role="tab" aria-selected="false" aria-controls="tab-dna"       onclick="tab('dna', this)">🧬 DNA Calculator</button>
 </nav>
 
-<div class="content">
+<main class="content">
 
   <!-- ── Frog Builder ── -->
-  <div class="tab-panel active" id="tab-builder">
+  <div class="tab-panel active" id="tab-builder" role="tabpanel" aria-labelledby="tabbtn-builder">
     <div class="card">
-      <div class="card-title">Build a Frog</div>
+      <h2 class="card-title">Build a Frog</h2>
       <div class="builder-layout">
 
         <div class="builder-preview">
@@ -487,34 +537,34 @@
     </div>
 
     <div class="card">
-      <div class="card-title">How Frog Rendering Works</div>
-      <p style="color:var(--cream-dim);font-size:12px;line-height:1.7">
+      <h2 class="card-title">How Frog Rendering Works</h2>
+      <p style="color:var(--subtext0);font-size:12px;line-height:1.7">
         Each frog is composited from three layers:<br>
-        <strong style="color:var(--cream)">1. Base layer</strong> — a grayscale frog silhouette, tinted with the body color.<br>
-        <strong style="color:var(--cream)">2. Genus layer</strong> — genus-specific markings (spots, stripes, etc.), tinted with the pattern color.<br>
-        <strong style="color:var(--cream)">3. Overlay</strong> — a shading mask applied with a hard-light blend to add depth and restore eye whites.<br>
+        <strong style="color:var(--text)">1. Base layer</strong> — a grayscale frog silhouette, tinted with the body color.<br>
+        <strong style="color:var(--text)">2. Genus layer</strong> — genus-specific markings (spots, stripes, etc.), tinted with the pattern color.<br>
+        <strong style="color:var(--text)">3. Overlay</strong> — a shading mask applied with a hard-light blend to add depth and restore eye whites.<br>
         Special: <em>Chroma</em> pattern animates through the full RGB spectrum. <em>Glass</em> color makes the frog semi-transparent. <em>Flagro</em> fills its markings with a scrolling flame texture instead of a flat color.
       </p>
     </div>
   </div>
 
   <!-- ── Breeds ── -->
-  <div class="tab-panel" id="tab-species">
+  <div class="tab-panel" id="tab-species" role="tabpanel" aria-labelledby="tabbtn-species">
     <div class="species-toolbar">
       <div class="breeds-search-row">
         <input class="search-input" type="search" id="species-search"
                placeholder="Search color, pattern, genus, or #index…"
-               oninput="filterSpecies(this.value)">
+               oninput="debouncedFilterSpecies(this.value)">
         <span class="count-lbl" id="species-count"></span>
       </div>
       <div class="breeds-filter-row">
-        <select class="filter-select" id="species-color-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
+        <select class="filter-select" id="species-color-filter" aria-label="Filter by color" onchange="filterSpecies(document.getElementById('species-search').value)">
           <option value="">All Colors</option>
         </select>
-        <select class="filter-select" id="species-pattern-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
+        <select class="filter-select" id="species-pattern-filter" aria-label="Filter by pattern" onchange="filterSpecies(document.getElementById('species-search').value)">
           <option value="">All Patterns</option>
         </select>
-        <select class="filter-select" id="species-genus-filter" onchange="filterSpecies(document.getElementById('species-search').value)">
+        <select class="filter-select" id="species-genus-filter" aria-label="Filter by genus" onchange="filterSpecies(document.getElementById('species-search').value)">
           <option value="">All Genera</option>
         </select>
         <button class="btn btn-sm" style="background:var(--surface0);color:var(--subtext0);border:1px solid var(--surface1)" onclick="resetBreedFilters()">Reset</button>
@@ -529,9 +579,9 @@
   </div>
 
   <!-- ── Set Builder ── -->
-  <div class="tab-panel" id="tab-setbuilder">
+  <div class="tab-panel" id="tab-setbuilder" role="tabpanel" aria-labelledby="tabbtn-setbuilder">
     <div class="card">
-      <div class="card-title">Build a Custom Set</div>
+      <h2 class="card-title">Build a Custom Set</h2>
       <div class="setbuilder-layout">
 
         <!-- Left: frog picker + set name -->
@@ -549,29 +599,29 @@
             </div>
             <div class="setbuilder-frog-controls">
               <div class="form-group">
-                <label class="form-label">Color</label>
+                <label class="form-label" for="sb-color">Color</label>
                 <div class="color-preview-row">
                   <div class="color-dot" id="sb-color-dot"></div>
                   <select class="form-input" id="sb-color" onchange="sbUpdate()"></select>
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Pattern</label>
+                <label class="form-label" for="sb-pattern">Pattern</label>
                 <div class="color-preview-row">
                   <div class="color-dot" id="sb-pattern-dot"></div>
                   <select class="form-input" id="sb-pattern" onchange="sbUpdate()"></select>
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Genus</label>
+                <label class="form-label" for="sb-genus">Genus</label>
                 <select class="form-input" id="sb-genus" onchange="sbUpdate()"></select>
               </div>
               <div class="form-group">
-                <label class="form-label">Quantity</label>
-                <div class="sb-count-row">
-                  <button class="btn btn-sm" style="background:var(--surface0);border:1px solid var(--surface1);color:var(--text)" onclick="sbCountAdj(-1)">−</button>
-                  <span id="sb-count-val" class="sb-count-display">1</span>
-                  <button class="btn btn-sm" style="background:var(--surface0);border:1px solid var(--surface1);color:var(--text)" onclick="sbCountAdj(1)">+</button>
+                <label class="form-label" id="sb-qty-label">Quantity</label>
+                <div class="sb-count-row" role="group" aria-labelledby="sb-qty-label">
+                  <button class="btn btn-sm" style="background:var(--surface0);border:1px solid var(--surface1);color:var(--text)" aria-label="Decrease quantity" onclick="sbCountAdj(-1)">−</button>
+                  <span id="sb-count-val" class="sb-count-display" aria-live="polite">1</span>
+                  <button class="btn btn-sm" style="background:var(--surface0);border:1px solid var(--surface1);color:var(--text)" aria-label="Increase quantity" onclick="sbCountAdj(1)">+</button>
                 </div>
               </div>
               <div class="btn-row">
@@ -585,7 +635,7 @@
         <!-- Right: live set preview -->
         <div class="setbuilder-preview">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-            <div class="form-label" style="margin-bottom:0">Set Preview <span id="sb-slot-badge" style="font-size:10px;color:var(--overlay0);text-transform:none;letter-spacing:0;margin-left:6px">0 / 8 frogs</span></div>
+            <div class="form-label" style="margin-bottom:0">Set Preview <span id="sb-slot-badge" style="font-size:10px;color:var(--subtext0);text-transform:none;letter-spacing:0;margin-left:6px">0 / 8 frogs</span></div>
             <div class="view-toggle" style="margin-left:auto">
               <button class="view-toggle-btn active" data-mode="card" onclick="setViewMode('card')">⊞ Card</button>
               <button class="view-toggle-btn"        data-mode="game" onclick="setViewMode('game')">🎮 Game</button>
@@ -615,22 +665,22 @@
 
         <div class="sb-import-row" style="flex:1;min-width:220px">
           <div class="form-label" style="margin-bottom:6px">Import Set Data</div>
-          <p style="font-size:11px;color:var(--overlay1);margin-bottom:8px">Paste exported set data from Pocket Frogs (e.g. <code style="background:var(--surface0);padding:1px 5px;border-radius:3px">1:2:7:16,…</code>). Overwrites current set.</p>
+          <p style="font-size:11px;color:var(--overlay1);margin-bottom:8px">Paste exported set data from Pocket Frogs (e.g. <code style="background:var(--surface0);padding:1px 5px;border-radius:3px;font-family:'IBM Plex Mono',ui-monospace,monospace">1:2:7:16,…</code>). Overwrites current set.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
-            <textarea class="form-input" id="sb-import-text" rows="3" placeholder="1:2:7:16,1:1:10:16,…" style="flex:1;min-width:200px;font-family:monospace;font-size:12px;resize:vertical"></textarea>
+            <textarea class="form-input" id="sb-import-text" rows="3" placeholder="1:2:7:16,1:1:10:16,…" style="flex:1;min-width:200px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;resize:vertical"></textarea>
             <button class="btn btn-primary btn-sm" style="align-self:flex-end" onclick="sbImport()">Import</button>
           </div>
-          <div id="sb-import-error" style="display:none;font-size:11px;color:var(--red);margin-top:6px"></div>
+          <div id="sb-import-error" role="alert" style="display:none;font-size:11px;color:var(--red);margin-top:6px"></div>
         </div>
 
         <div style="flex:1;min-width:220px">
           <div class="form-label" style="margin-bottom:6px">Export Set Data</div>
           <p style="font-size:11px;color:var(--overlay1);margin-bottom:8px">Save your current set as game-compatible data you can re-import later.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
-            <textarea class="form-input" id="sb-export-text" rows="3" placeholder="Add frogs to your set first…" readonly style="flex:1;min-width:200px;font-family:monospace;font-size:12px;resize:vertical;color:var(--subtext0)"></textarea>
+            <textarea class="form-input" id="sb-export-text" rows="3" placeholder="Add frogs to your set first…" readonly style="flex:1;min-width:200px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;resize:vertical;color:var(--subtext0)"></textarea>
             <button class="btn btn-sm" id="sb-copy-btn" style="align-self:flex-end;background:var(--surface0);color:var(--subtext0);border:1px solid var(--surface1)" onclick="sbCopyExport()">Copy</button>
           </div>
-          <div id="sb-copy-confirm" style="display:none;font-size:11px;color:var(--green);margin-top:6px">✓ Copied to clipboard</div>
+          <div id="sb-copy-confirm" role="status" aria-live="polite" style="display:none;font-size:11px;color:var(--green);margin-top:6px">✓ Copied to clipboard</div>
         </div>
 
       </div>
@@ -639,7 +689,7 @@
   </div>
 
   <!-- ── Weekly Sets ── -->
-  <div class="tab-panel" id="tab-sets">
+  <div class="tab-panel" id="tab-sets" role="tabpanel" aria-labelledby="tabbtn-sets">
     <div class="sets-note">
       Sets data is fetched live from <strong>nimblebit.com/sets.txt</strong>.
       The most recent set is shown first.
@@ -648,7 +698,7 @@
       <input class="search-input" type="search" id="sets-search"
              placeholder="Search set names or frog species…"
              oninput="filterSets(this.value)">
-      <select class="filter-select" id="sets-sort" onchange="filterSets(document.getElementById('sets-search').value)">
+      <select class="filter-select" id="sets-sort" aria-label="Sort sets" onchange="filterSets(document.getElementById('sets-search').value)">
         <option value="newest">Newest first</option>
         <option value="oldest">Oldest first</option>
       </select>
@@ -658,17 +708,17 @@
         <button class="view-toggle-btn"        data-mode="game" onclick="setViewMode('game')">🎮 Game</button>
       </div>
     </div>
-    <div id="sets-status" class="status-loading">Fetching sets…</div>
+    <div id="sets-status" class="status-loading" role="status" aria-live="polite">Fetching sets…</div>
     <div class="sets-grid" id="sets-grid"></div>
   </div>
 
   <!-- ── Scenery ── -->
-  <div class="tab-panel" id="tab-scenery">
+  <div class="tab-panel" id="tab-scenery" role="tabpanel" aria-labelledby="tabbtn-scenery">
     <div class="scenery-toolbar">
       <input class="search-input" type="search" id="scenery-search"
              placeholder="Search scenery…"
              oninput="filterScenery(this.value)">
-      <select class="filter-select" id="scenery-level-filter"
+      <select class="filter-select" id="scenery-level-filter" aria-label="Filter by level"
               onchange="filterScenery(document.getElementById('scenery-search').value)">
         <option value="">All levels</option>
         <option value="1">Level 1</option>
@@ -683,7 +733,7 @@
       </select>
       <span class="count-lbl" id="scenery-count"></span>
     </div>
-    <div style="font-size:11px;color:var(--overlay1);margin-bottom:10px;">⭐ = +happiness bonus granted to frogs in the same habitat</div>
+    <div style="font-size:11px;color:var(--subtext0);margin-bottom:10px;">⭐ = +happiness bonus granted to frogs in the same habitat</div>
     <div class="scenery-grid" id="scenery-grid"></div>
     <div class="scenery-credit">
       Happiness, cost &amp; delivery data sourced from the
@@ -693,20 +743,20 @@
   </div>
 
   <!-- ── DNA Calculator ── -->
-  <div class="tab-panel" id="tab-dna">
+  <div class="tab-panel" id="tab-dna" role="tabpanel" aria-labelledby="tabbtn-dna">
     <div class="dna-layout">
       <div class="dna-controls">
         <div class="dna-selects">
           <div class="dna-field">
-            <label class="dna-label">Base Color</label>
+            <label class="dna-label" for="dna-color">Base Color</label>
             <select class="filter-select dna-select" id="dna-color" onchange="dnaCalc()"></select>
           </div>
           <div class="dna-field">
-            <label class="dna-label">Pattern Color</label>
+            <label class="dna-label" for="dna-patcolor">Pattern Color</label>
             <select class="filter-select dna-select" id="dna-patcolor" onchange="dnaCalc()"></select>
           </div>
           <div class="dna-field">
-            <label class="dna-label">Genus</label>
+            <label class="dna-label" for="dna-genus">Genus</label>
             <select class="filter-select dna-select" id="dna-genus" onchange="dnaCalc()"></select>
           </div>
         </div>
@@ -715,7 +765,7 @@
           <div class="dna-frog-name" id="dna-frog-name"></div>
         </div>
       </div>
-      <div class="dna-results" id="dna-results">
+      <div class="dna-results" id="dna-results" role="status" aria-live="polite">
         <div class="dna-placeholder">Select a frog above to see its stats</div>
       </div>
     </div>
@@ -725,7 +775,7 @@
     </div>
   </div>
 
-</div>
+</main>
 
 <script>
 // Capture URL immediately — before any init code can overwrite it
@@ -1170,13 +1220,30 @@ function frogFullName(colorId, patternId, genusId) {
   return color + ' ' + pattern + ' ' + genus;
 }
 
-// Froggydex bit index: colorId * 1920 + patternId * 120 + genusId
+// Froggydex bit index: packs (colorId, patternId, genusId) into one number.
+// The genus slot is sized to the highest genus ID in play, not a fixed guess —
+// genus IDs aren't contiguous from 0, so a fixed multiplier drifts out of sync
+// every time new genera are added and starts colliding across pattern boundaries.
 function fdexBit(colorId, patternId, genusId) {
-  return colorId * 1920 + patternId * 120 + genusId;
+  return (colorId * PATTERN_KEYS.length + patternId) * GENUS_ID_SPAN + genusId;
 }
 
 function toHex(r, g, b) {
   return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Activatable cards (keyboard + screen reader access for click-to-build cards)
+// ══════════════════════════════════════════════════════════════════════════════
+
+function makeActivatable(el, label, onActivate) {
+  el.tabIndex = 0;
+  el.setAttribute('role', 'button');
+  el.setAttribute('aria-label', label);
+  el.onclick = onActivate;
+  el.onkeydown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onActivate(); }
+  };
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1187,11 +1254,28 @@ let setsInitialized = false;
 let sceneryInitialized = false;
 let dnaInitialized = false;
 
-function tab(name, btn, _history = 'push') {
+function _reducedMotion() {
+  return matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+// Tags an element so the View Transitions API morphs it into whatever element
+// carries the same name in the next captured DOM state — used to fly a clicked
+// frog canvas into the Frog Builder's preview canvas instead of an abrupt cut.
+// A no-op (nothing tagged, nothing to clean up) when unsupported or when the
+// user prefers reduced motion — the tab/frog switch itself is unaffected either way.
+let _morphedEls = [];
+function morphCanvasName(el) {
+  if (!document.startViewTransition || _reducedMotion()) return;
+  el.style.viewTransitionName = 'frog-morph';
+  _morphedEls.push(el);
+}
+
+function _tabCore(name, btn, _history) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
+  btn.setAttribute('aria-selected', 'true');
   if (name === 'sets'       && !setsInitialized)       { setsInitialized = true; loadSets(); }
   if (name === 'species'    && !breedsInitialized)     { breedsInitialized = true; filterSpecies(''); }
   if (name === 'setbuilder' && !sbBuilderInitialized)  { initSetBuilder(); }
@@ -1202,7 +1286,22 @@ function tab(name, btn, _history = 'push') {
       .call(history, null, '', _TAB_PATHS[name]);
   }
   // Re-stamp frog URL when returning to builder tab
-  if (_builderInitDone && name === 'builder') builderUpdate();
+  if (_builderInitDone && name === 'builder') {
+    builderUpdate();
+    morphCanvasName(document.getElementById('builder-canvas'));
+  }
+}
+
+function tab(name, btn, _history = 'push') {
+  if (!document.startViewTransition || _reducedMotion()) {
+    _tabCore(name, btn, _history);
+    return;
+  }
+  const transition = document.startViewTransition(() => _tabCore(name, btn, _history));
+  transition.finished.finally(() => {
+    _morphedEls.forEach(el => { el.style.viewTransitionName = ''; });
+    _morphedEls = [];
+  });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1254,7 +1353,7 @@ function builderUpdate() {
   const bit = fdexBit(colorId, patternId, genusId);
   document.getElementById('builder-dexid').innerHTML =
     'Splashdex Index: <strong>#' + bit + '</strong>' +
-    (bit >= 44528 ? ' <span style="color:#ff8060">(out of range)</span>' : '');
+    (bit >= TOTAL_BREEDS ? ' <span style="color:#ff8060">(out of range)</span>' : '');
 
   // Update color swatch dots
   const [,cr,cg,cb] = COLORS[colorId] || [null,128,128,128];
@@ -1350,6 +1449,10 @@ const BREEDS_PER_PAGE = 120;
 const COLOR_KEYS   = Object.keys(COLORS).map(Number);
 const PATTERN_KEYS = Object.keys(PATTERNS).map(Number);
 const GENUS_KEYS   = Object.keys(GENERA).map(Number);
+// fdexBit's positional encoding needs a genus slot wide enough for every genus ID,
+// not just a count — the game's genus IDs aren't guaranteed contiguous from 0.
+const GENUS_ID_SPAN = Math.max(...GENUS_KEYS) + 1;
+const TOTAL_BREEDS  = COLOR_KEYS.length * PATTERN_KEYS.length * GENUS_KEYS.length;
 
 let breedsPage = 0;
 let breedsTotal = 0;
@@ -1374,6 +1477,13 @@ function filterSpecies(query) {
   breedsGenusFilter   = genusVal   !== '' ? parseInt(genusVal)   : null;
   breedsPage = 0;
   renderSpeciesGrid();
+}
+
+// Breed search scans the full 44k+ combination space per keystroke — debounce it.
+let _breedsSearchTimer = null;
+function debouncedFilterSpecies(query) {
+  clearTimeout(_breedsSearchTimer);
+  _breedsSearchTimer = setTimeout(() => filterSpecies(query), 150);
 }
 
 function breedsChangePage(delta) {
@@ -1423,7 +1533,7 @@ function renderSpeciesGrid() {
   const nextEl = document.getElementById('breeds-next');
 
   document.getElementById('species-count').textContent =
-    total.toLocaleString() + ' / 44,528 breeds';
+    total.toLocaleString() + ' / ' + TOTAL_BREEDS.toLocaleString() + ' breeds';
   pagEl.style.display = total > BREEDS_PER_PAGE ? '' : 'none';
   lblEl.textContent = 'Page ' + (breedsPage + 1) + ' of ' + totalPages;
   prevEl.disabled = breedsPage === 0;
@@ -1438,13 +1548,14 @@ function renderSpeciesGrid() {
     card.className = 'species-card';
     const label = frogFullName(colorId, patternId, genusId);
     card.title = label;
-    card.onclick = () => {
+    makeActivatable(card, 'Build ' + label, () => {
       document.getElementById('b-color').value   = colorId;
       document.getElementById('b-pattern').value = patternId;
       document.getElementById('b-genus').value   = genusId;
+      morphCanvasName(canvas);
       tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
       builderUpdate();
-    };
+    });
 
     const canvas = document.createElement('canvas');
     canvas.width = 72; canvas.height = 72;
@@ -1457,7 +1568,7 @@ function renderSpeciesGrid() {
     nameEl.className = 'species-name';
     nameEl.textContent = label;
 
-    const dexId = colorId * 1920 + patternId * 120 + genusId;
+    const dexId = fdexBit(colorId, patternId, genusId);
     const idEl = document.createElement('div');
     idEl.className = 'species-id';
     idEl.textContent = '#' + dexId;
@@ -1700,14 +1811,16 @@ function buildSetCard(set, obs) {
       const tile = document.createElement('div');
       tile.className = 'set-frog-tile';
       tile.style.cursor = 'pointer';
-      tile.title = frogFullName(colorId, patternId, genusId) + ' — click to build';
-      tile.onclick = () => {
+      const tileLabel = frogFullName(colorId, patternId, genusId);
+      tile.title = tileLabel + ' — click to build';
+      makeActivatable(tile, 'Build ' + tileLabel, () => {
         document.getElementById('b-color').value   = colorId;
         document.getElementById('b-pattern').value = patternId;
         document.getElementById('b-genus').value   = genusId;
+        morphCanvasName(canvas);
         tab('builder', document.querySelector('.tab-btn:nth-child(1)'));
         builderUpdate();
-      };
+      });
 
       const wrap = document.createElement('div');
       wrap.className = 'set-frog-wrap';
@@ -1851,6 +1964,31 @@ let sbFrogs = [];            // [{colorId, patternId, genusId, count}]
 let sbCount = 1;
 let sbBuilderInitialized = false;
 
+const SB_STORAGE_KEY = 'splashdex-set-builder';
+
+// Persist the in-progress set so a reload, back-nav, or accidental tab close
+// doesn't silently erase a hand-picked set — this is the only draft the user has.
+function sbSaveState() {
+  try {
+    localStorage.setItem(SB_STORAGE_KEY, JSON.stringify({
+      name: document.getElementById('sb-set-name').value,
+      frogs: sbFrogs,
+    }));
+  } catch (_) {} // storage disabled/full — persistence is a nicety, not a requirement
+}
+
+function sbLoadState() {
+  try {
+    const raw = localStorage.getItem(SB_STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (saved && Array.isArray(saved.frogs)) {
+      sbFrogs = saved.frogs;
+      if (saved.name) document.getElementById('sb-set-name').value = saved.name;
+    }
+  } catch (_) {}
+}
+
 function initSetBuilder() {
   sbBuilderInitialized = true;
   const colorSel = document.getElementById('sb-color');
@@ -1866,6 +2004,8 @@ function initSetBuilder() {
     const o = document.createElement('option'); o.value=id; o.textContent=n; genusSel.appendChild(o);
   });
   sbRandomize();
+  sbLoadState();
+  if (sbFrogs.length) renderSbPreview();
 }
 
 function sbUpdate() {
@@ -1907,6 +2047,8 @@ function sbRemoveFrog(idx) {
 }
 
 function sbClear() {
+  if (sbFrogs.length &&
+      !confirm('Clear all ' + sbFrogs.length + (sbFrogs.length === 1 ? ' frog' : ' frogs') + ' from this set? This can’t be undone.')) return;
   sbFrogs = [];
   renderSbPreview();
 }
@@ -1922,10 +2064,14 @@ function sbCopyExport() {
     const el = document.getElementById('sb-copy-confirm');
     el.style.display = '';
     setTimeout(() => { el.style.display = 'none'; }, 2000);
+  }).catch(() => {
+    const errEl = document.getElementById('sb-import-error');
+    errEl.textContent = 'Could not copy to clipboard — copy the text above manually.';
+    errEl.style.display = '';
   });
 }
 
-function sbImport() {
+function sbImport(skipConfirm) {
   const raw = document.getElementById('sb-import-text').value.trim();
   const errEl = document.getElementById('sb-import-error');
   errEl.style.display = 'none';
@@ -1945,6 +2091,12 @@ function sbImport() {
     parsed.push({ colorId, patternId, genusId, count: Math.max(1, count) });
   }
 
+  // A deep-linked set (skipConfirm) should just load — the whole point of opening
+  // the link is to see that set. Only the manual Import button needs the guard.
+  if (!skipConfirm && sbFrogs.length &&
+      !confirm('Importing will replace your current set of ' + sbFrogs.length +
+               (sbFrogs.length === 1 ? ' frog' : ' frogs') + '. Continue?')) return;
+
   if (parsed.length > 8) { errEl.textContent = 'Sets are capped at 8 frogs — imported first 8.'; errEl.style.display = ''; }
   sbFrogs = parsed.slice(0, 8);
   document.getElementById('sb-import-text').value = '';
@@ -1952,6 +2104,7 @@ function sbImport() {
 }
 
 function renderSbPreview() {
+  sbSaveState();
   const exportEl = document.getElementById('sb-export-text');
   if (exportEl) exportEl.value = sbFrogs.length ? sbExportString() : '';
 
@@ -2078,29 +2231,33 @@ function getDeepLinkUrl(type, ...args) {
   return origin + '/frog';
 }
 
-function showLinkCopiedToast() {
+function showLinkCopiedToast(message, color) {
   let toast = document.getElementById('_link-toast');
   if (!toast) {
     toast = document.createElement('div');
     toast.id = '_link-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
     Object.assign(toast.style, {
       position: 'fixed', bottom: '40px', left: '50%', transform: 'translateX(-50%)',
-      background: 'var(--surface0)', color: 'var(--green)',
-      border: '1px solid var(--surface1)', borderRadius: '8px',
+      background: 'var(--surface0)', border: '1px solid var(--surface1)', borderRadius: '8px',
       padding: '8px 18px', fontSize: '13px', fontWeight: '500',
       zIndex: '9999', pointerEvents: 'none', transition: 'opacity .2s',
       whiteSpace: 'nowrap',
     });
-    toast.textContent = '🔗 Link copied!';
     document.body.appendChild(toast);
   }
+  toast.textContent = message || '🔗 Link copied!';
+  toast.style.color = color || 'var(--green)';
   toast.style.opacity = '1';
   clearTimeout(_toastTimeout);
   _toastTimeout = setTimeout(() => { toast.style.opacity = '0'; }, 2200);
 }
 
 function copyDeepLink(type, ...args) {
-  navigator.clipboard.writeText(getDeepLinkUrl(type, ...args)).then(showLinkCopiedToast);
+  navigator.clipboard.writeText(getDeepLinkUrl(type, ...args))
+    .then(() => showLinkCopiedToast())
+    .catch(() => showLinkCopiedToast('Could not copy link — clipboard access blocked.', 'var(--red)'));
 }
 
 // Update OG/Twitter meta + page title for a frog deep link (helps JS-aware platforms)
@@ -2232,7 +2389,7 @@ function parseDeepLink() {
         if (!sbBuilderInitialized) { setTimeout(tryImport, 50); return; }
         if (params.name) document.getElementById('sb-set-name').value = params.name;
         document.getElementById('sb-import-text').value = params.builder;
-        sbImport();
+        sbImport(true);
       };
       tryImport();
     }
@@ -2747,6 +2904,7 @@ window.addEventListener('popstate', () => {
 
 // ── DNA Calculator ────────────────────────────────────────────────────────────
 let _dnaStats = null;
+let _dnaStatsFailed = false;
 
 // Pattern level lookup (patternId/genusId → level)
 const GENUS_LEVEL = {
@@ -2801,18 +2959,19 @@ function initDnaCalc() {
     patEl.appendChild(o);
   });
 
-  // Lazy-load stats JSON then calculate
-  if (!_dnaStats) {
-    fetch('frog_stats.json')
-      .then(r => r.json())
-      .then(data => { _dnaStats = data; dnaCalc(); })
-      .catch(() => {
-        document.getElementById('dna-results').innerHTML =
-          '<div class="dna-placeholder" style="color:var(--red)">Failed to load stats data.</div>';
-      });
-  } else {
-    dnaCalc();
-  }
+  _loadDnaStats();
+}
+
+function _loadDnaStats() {
+  if (_dnaStats) { dnaCalc(); return; }
+  _dnaStatsFailed = false;
+  fetch('frog_stats.json')
+    .then(r => r.json())
+    .then(data => { _dnaStats = data; dnaCalc(); })
+    .catch(() => {
+      _dnaStatsFailed = true;
+      dnaCalc();
+    });
 }
 
 function dnaCalc() {
@@ -2827,6 +2986,13 @@ function dnaCalc() {
     frogFullName(colorId, patColorId, genusId);
 
   const resultsEl = document.getElementById('dna-results');
+
+  if (_dnaStatsFailed) {
+    resultsEl.innerHTML =
+      '<div class="dna-placeholder" style="color:var(--red)">Failed to load stats data. ' +
+      '<a href="#" onclick="_loadDnaStats();return false;" style="color:var(--red);text-decoration:underline">Retry</a></div>';
+    return;
+  }
 
   if (!_dnaStats) {
     resultsEl.innerHTML = '<div class="dna-placeholder">Loading stats…</div>';
